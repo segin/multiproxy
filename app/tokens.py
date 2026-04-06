@@ -25,4 +25,4 @@ def count_tokens(content: Union[str, List[Dict[str, Any]]], model_id: str) -> in
         # Fallback to standard OpenAI encoding for unknown or custom models
         encoding = tiktoken.get_encoding("cl100k_base")
         
-    return len(encoding.encode(text_content))
+    return len(encoding.encode(text_content, allowed_special="all"))

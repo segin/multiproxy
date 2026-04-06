@@ -31,10 +31,11 @@ app = FastAPI(title="MultiProxy", lifespan=lifespan)
 async def stream_backend_response(url: str, payload: dict, start_time: float, request_model: str, prompt_tokens: int):
     completion_tokens = 0
     status_code = 200
+    error_details = None
     
     async with httpx.AsyncClient() as client:
         try:
-            async with client.stream("POST", url, json=payload, timeout=60.0) as response:
+            async with client.stream("POST", url, json=payload, timeout=600.0) as response:
                 if response.is_error:
                     await response.aread()
                 response.raise_for_status()
@@ -53,15 +54,22 @@ async def stream_backend_response(url: str, payload: dict, start_time: float, re
             except Exception:
                 backend_error = {"error": {"message": e.response.text, "type": "api_error", "code": status_code}}
             error_msg = json.dumps(backend_error)
+            error_details = backend_error.get("error", {}).get("message", str(e))
             yield f"data: {error_msg}\n\ndata: [DONE]\n\n".encode("utf-8")
         except httpx.RequestError as e:
             status_code = 502
-            error_msg = json.dumps({"error": {"message": f"Backend connection error: {str(e)}", "type": "api_error", "code": 502}})
+            error_details = f"Backend connection error: {str(e)}"
+            error_msg = json.dumps({"error": {"message": error_details, "type": "api_error", "code": 502}})
+            yield f"data: {error_msg}\n\ndata: [DONE]\n\n".encode("utf-8")
+        except Exception as e:
+            status_code = 500
+            error_details = f"Internal proxy stream error: {str(e)}"
+            error_msg = json.dumps({"error": {"message": error_details, "type": "api_error", "code": 500}})
             yield f"data: {error_msg}\n\ndata: [DONE]\n\n".encode("utf-8")
         finally:
             duration = (time.time() - start_time) * 1000
             usage = UsageInfo(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens, total_tokens=prompt_tokens + completion_tokens)
-            log_request(request_model, url, status_code, duration, usage)
+            log_request(request_model, url, status_code, duration, usage, error_details)
 
 @app.post("/v1/chat/completions")
 async def chat_completions(request: ChatCompletionRequest, background_tasks: BackgroundTasks):
@@ -69,14 +77,18 @@ async def chat_completions(request: ChatCompletionRequest, background_tasks: Bac
     try:
         backend = get_backend(request.model, current_config)
     except ModelNotFoundError as e:
+        background_tasks.add_task(log_request, request.model, "N/A", 404, (time.time() - start_time) * 1000, None, str(e))
         raise HTTPException(status_code=404, detail=str(e))
     except NoBackendsAvailableError as e:
+        background_tasks.add_task(log_request, request.model, "N/A", 503, (time.time() - start_time) * 1000, None, str(e))
         raise HTTPException(status_code=503, detail=str(e))
         
     prompt_tokens = sum(count_tokens(m.content if isinstance(m.content, str) else m.model_dump()["content"], request.model) for m in request.messages)
     limit = get_backend_limit(backend.id)
     if limit is not None and prompt_tokens > limit:
-        raise HTTPException(status_code=400, detail={"error": {"code": 400, "message": f"request ({prompt_tokens} tokens) exceeds the available context size ({limit} tokens), try increasing it", "type": "exceed_context_size_error"}})
+        err_msg = f"request ({prompt_tokens} tokens) exceeds the available context size ({limit} tokens), try increasing it"
+        background_tasks.add_task(log_request, request.model, backend.url, 400, (time.time() - start_time) * 1000, UsageInfo(prompt_tokens=prompt_tokens, completion_tokens=0, total_tokens=prompt_tokens), err_msg)
+        raise HTTPException(status_code=400, detail={"error": {"code": 400, "message": err_msg, "type": "exceed_context_size_error"}})
 
     target_url = f"{backend.url.rstrip('/')}/v1/chat/completions"
     payload = request.model_dump(exclude_none=True)
@@ -86,6 +98,7 @@ async def chat_completions(request: ChatCompletionRequest, background_tasks: Bac
     
     status_code = 200
     usage = None
+    error_details = None
     
     async with httpx.AsyncClient() as client:
         try:
@@ -104,15 +117,21 @@ async def chat_completions(request: ChatCompletionRequest, background_tasks: Bac
             return JSONResponse(status_code=status_code, content=data)
         except httpx.HTTPStatusError as e:
             status_code = e.response.status_code
-            raise HTTPException(status_code=status_code, detail=f"Backend error: {e.response.text}")
+            error_details = e.response.text
+            raise HTTPException(status_code=status_code, detail=f"Backend error: {error_details}")
         except httpx.RequestError as e:
             status_code = 502
-            raise HTTPException(status_code=502, detail=f"Error connecting to backend: {str(e)}")
+            error_details = str(e)
+            raise HTTPException(status_code=502, detail=f"Error connecting to backend: {error_details}")
+        except Exception as e:
+            status_code = 500
+            error_details = str(e)
+            raise HTTPException(status_code=500, detail=f"Internal proxy error: {error_details}")
         finally:
             duration = (time.time() - start_time) * 1000
             if not usage:
                 usage = UsageInfo(prompt_tokens=prompt_tokens, completion_tokens=0, total_tokens=prompt_tokens)
-            background_tasks.add_task(log_request, request.model, target_url, status_code, duration, usage)
+            background_tasks.add_task(log_request, request.model, target_url, status_code, duration, usage, error_details)
 
 @app.get("/v1/models")
 async def list_models():

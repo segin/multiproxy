@@ -1,6 +1,6 @@
 import sqlite3
 import time
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from app.schemas import UsageInfo
 
 _DB_PATH = "logs.db"
@@ -21,9 +21,15 @@ def init_db(db_path: str = "logs.db"):
                 duration_ms REAL NOT NULL,
                 prompt_tokens INTEGER,
                 completion_tokens INTEGER,
-                total_tokens INTEGER
+                total_tokens INTEGER,
+                error_message TEXT
             )
         """)
+        # Add error_message column if it doesn't exist (for existing databases)
+        try:
+            cursor.execute("ALTER TABLE logs ADD COLUMN error_message TEXT")
+        except sqlite3.OperationalError:
+            pass # Column already exists
         conn.commit()
 
 def log_request(
@@ -31,15 +37,16 @@ def log_request(
     backend_url: str,
     status_code: int,
     duration_ms: float,
-    usage: UsageInfo | None = None
+    usage: Optional[UsageInfo] = None,
+    error_message: Optional[str] = None
 ):
     with sqlite3.connect(_DB_PATH) as conn:
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO logs (
                 timestamp, model_id, backend_url, status_code, duration_ms, 
-                prompt_tokens, completion_tokens, total_tokens
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                prompt_tokens, completion_tokens, total_tokens, error_message
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             time.time(),
             model_id,
@@ -48,7 +55,8 @@ def log_request(
             duration_ms,
             usage.prompt_tokens if usage else None,
             usage.completion_tokens if usage else None,
-            usage.total_tokens if usage else None
+            usage.total_tokens if usage else None,
+            error_message
         ))
         conn.commit()
 
