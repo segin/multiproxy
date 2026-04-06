@@ -1,0 +1,111 @@
+import pytest
+from unittest.mock import patch, AsyncMock
+from fastapi.testclient import TestClient
+from app.main import app
+from app.config import Config, Backend, ModelMapping
+from httpx import Response, Request, HTTPStatusError, RequestError
+
+client = TestClient(app)
+
+@pytest.fixture
+def mock_config(monkeypatch):
+    config = Config(
+        backends=[Backend(id="backend1", url="http://fake-backend:8080")],
+        model_mappings=[ModelMapping(model_id="test-model", backend_ids=["backend1"])]
+    )
+    # We will need to patch the global config used by the app.
+    # We can assume app.main will have a get_config dependency or global variable.
+    # For now, let's patch the load_config or however the app gets it.
+    # Since we haven't implemented it yet, we'll patch a hypothetical app.main.current_config
+    monkeypatch.setattr("app.main.current_config", config, raising=False)
+    return config
+
+def test_proxy_forwards_request(mock_config):
+    payload = {
+        "model": "test-model",
+        "messages": [{"role": "user", "content": "Ping"}]
+    }
+    
+    mock_request = Request("POST", "http://fake-backend:8080/v1/chat/completions")
+    mock_response = Response(
+        status_code=200, 
+        json={
+            "id": "chatcmpl-123",
+            "object": "chat.completion",
+            "created": 1234567890,
+            "model": "test-model",
+            "choices": [{"index": 0, "message": {"role": "assistant", "content": "Pong"}, "finish_reason": "stop"}]
+        },
+        request=mock_request
+    )
+    
+    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+        mock_post.return_value = mock_response
+        
+        response = client.post("/v1/chat/completions", json=payload)
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data["choices"][0]["message"]["content"] == "Pong"
+        
+        # Verify the proxy made the correct outbound request
+        mock_post.assert_called_once()
+        called_url = str(mock_post.call_args[0][0])
+        assert called_url.startswith("http://fake-backend:8080")
+        assert "/v1/chat/completions" in called_url
+
+def test_proxy_model_not_found(mock_config):
+    payload = {
+        "model": "unmapped-model",
+        "messages": [{"role": "user", "content": "Ping"}]
+    }
+    response = client.post("/v1/chat/completions", json=payload)
+    assert response.status_code == 404
+
+def test_proxy_backend_http_error(mock_config):
+    payload = {
+        "model": "test-model",
+        "messages": [{"role": "user", "content": "Ping"}]
+    }
+    
+    mock_request = Request("POST", "http://fake-backend:8080/v1/chat/completions")
+    mock_response = Response(status_code=500, content=b"Internal Server Error", request=mock_request)
+    
+    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+        mock_post.side_effect = HTTPStatusError(
+            message="Internal Server Error",
+            request=mock_request,
+            response=mock_response
+        )
+        response = client.post("/v1/chat/completions", json=payload)
+        assert response.status_code == 500
+
+def test_proxy_backend_connection_error(mock_config):
+    payload = {
+        "model": "test-model",
+        "messages": [{"role": "user", "content": "Ping"}]
+    }
+    
+    mock_request = Request("POST", "http://fake-backend:8080/v1/chat/completions")
+    
+    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+        mock_post.side_effect = RequestError(
+            message="Connection refused",
+            request=mock_request
+        )
+        response = client.post("/v1/chat/completions", json=payload)
+        assert response.status_code == 502
+
+def test_proxy_no_backends_available(monkeypatch):
+    config = Config(
+        backends=[],
+        model_mappings=[ModelMapping(model_id="test-model", backend_ids=["backend1"])]
+    )
+    monkeypatch.setattr("app.main.current_config", config, raising=False)
+    
+    payload = {
+        "model": "test-model",
+        "messages": [{"role": "user", "content": "Ping"}]
+    }
+    response = client.post("/v1/chat/completions", json=payload)
+    assert response.status_code == 503
