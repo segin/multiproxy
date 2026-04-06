@@ -9,11 +9,11 @@
     - [ ] Implement YAML/JSON configuration loader.
     - [ ] Define configuration schema for backends and model mapping.
     - [ ] Write tests for configuration loading and validation.
-- [ ] Task: Model Mapping Logic
+- [x] Task: Model Mapping Logic e4990f4
     - [ ] Implement the core mapping of model IDs to backend instances.
     - [ ] Support load balancing across multiple backends for a single model ID.
     - [ ] Write tests for the mapping and routing logic.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Project Scaffolding and Core Logic' (Protocol in workflow.md) [checkpoint: ]
+- [~] Task: Conductor - User Manual Verification 'Phase 1: Project Scaffolding and Core Logic' (Protocol in workflow.md) [checkpoint: ]
 
 ## Phase 2: Proxy Implementation
 - [ ] Task: OpenAI Compatible API Endpoint
