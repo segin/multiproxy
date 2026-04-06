@@ -34,7 +34,7 @@
     - [ ] Write tests for streaming response integrity.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Proxy Implementation' (Protocol in workflow.md) [checkpoint: de5d932]
 
-## Phase 3: Observability and Statistics
+## Phase 3: Observability and Statistics [checkpoint: 6940fec]
 - [x] Task: Token Usage Tracking and Logging 2348883
     - [ ] Implement token counting logic (e.g., using `tiktoken` or approximate counting).
     - [ ] Create a logging mechanism for each request/response pair.
@@ -43,4 +43,4 @@
     - [ ] Set up SQLite database schema for statistics.
     - [ ] Implement async persistence of logs and aggregate stats.
     - [ ] Write tests for database operations and data integrity.
-- [~] Task: Conductor - User Manual Verification 'Phase 3: Observability and Statistics' (Protocol in workflow.md) [checkpoint: ]
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Observability and Statistics' (Protocol in workflow.md) [checkpoint: 6940fec]
