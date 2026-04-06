@@ -17,6 +17,7 @@ A high-performance, resilient multi-API-endpoint proxy designed for self-hosters
 ## Key Features
 - **Unified API Endpoint:** Multi-backend aggregation with full OpenAI and Anthropic compatibility.
 - **Configurable Model Mapping:** Flexible mapping of backend instances to specific model IDs.
+- **Default Model Fallback:** Seamlessly route requests for unconfigured or unknown model IDs to a designated default backend.
 - **Interactive Dashboard:** Real-time activity feed and statistical visualizations.
 - **Token Analytics:** Detailed tracking of token usage across models and timeframes.
 - **Metrics Exporting:** Support for detailed activity logging and metrics integration with external monitoring tools.
