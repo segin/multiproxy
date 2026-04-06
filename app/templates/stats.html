@@ -1,10 +1,10 @@
 <div class="card">
     <div class="card-title">Total Requests</div>
-    <div class="metric-value">{{ stats.total_requests }}</div>
+    <div class="metric-value">{{ "{:,}".format(stats.total_requests) }}</div>
 </div>
 <div class="card">
     <div class="card-title">Total Tokens</div>
-    <div class="metric-value">{{ stats.total_tokens }}</div>
+    <div class="metric-value">{{ "{:,}".format(stats.total_tokens) }}</div>
 </div>
 <div class="card">
     <div class="card-title">Avg Latency</div>
