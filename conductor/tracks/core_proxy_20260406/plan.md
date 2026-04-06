@@ -5,7 +5,7 @@
     - [ ] Initialize Python environment and dependencies.
     - [ ] Create basic project structure.
     - [ ] Write unit tests for project setup.
-- [ ] Task: Configuration Management
+- [x] Task: Configuration Management bb930e7
     - [ ] Implement YAML/JSON configuration loader.
     - [ ] Define configuration schema for backends and model mapping.
     - [ ] Write tests for configuration loading and validation.
