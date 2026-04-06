@@ -34,7 +34,8 @@ def test_proxy_forwards_request(mock_config):
             "object": "chat.completion",
             "created": 1234567890,
             "model": "test-model",
-            "choices": [{"index": 0, "message": {"role": "assistant", "content": "Pong"}, "finish_reason": "stop"}]
+            "choices": [{"index": 0, "message": {"role": "assistant", "content": "Pong"}, "finish_reason": "stop"}],
+            "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30}
         },
         request=mock_request
     )
