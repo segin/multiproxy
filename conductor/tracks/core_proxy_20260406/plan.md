@@ -20,11 +20,11 @@
     - [ ] Update configuration schema to include an optional `default_model_id` setting.
     - [ ] Update mapping logic to fallback to the `default_model_id` if a requested model doesn't exist.
     - [ ] Write tests for default model fallback routing.
-- [~] Task: OpenAI Compatible API Endpoint
+- [x] Task: OpenAI Compatible API Endpoint 77a80f0
     - [ ] Implement basic OpenAI `/v1/chat/completions` endpoint using FastAPI.
     - [ ] Ensure request/response schemas match OpenAI specifications.
     - [ ] Write tests for the API endpoint structure.
-- [ ] Task: Multi-backend Request Routing
+- [~] Task: Multi-backend Request Routing
     - [ ] Implement async request forwarding to backend `llama-server` instances.
     - [ ] Handle backend errors and basic failover logic.
     - [ ] Write tests for backend routing and error handling.
