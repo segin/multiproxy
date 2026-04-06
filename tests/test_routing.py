@@ -165,7 +165,7 @@ def test_proxy_forwards_streaming_request_http_error(mock_config):
         response = client.post("/v1/chat/completions", json=payload)
         assert response.status_code == 200
         content = response.content.decode()
-        assert "Backend HTTP error" in content
+        assert "Stream Error" in content
 
 def test_proxy_forwards_streaming_request_connection_error(mock_config):
     payload = {

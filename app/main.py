@@ -45,11 +45,17 @@ async def stream_backend_response(url: str, payload: dict, start_time: float, re
                     yield chunk
         except httpx.HTTPStatusError as e:
             status_code = e.response.status_code
-            error_msg = json.dumps({"error": f"Backend HTTP error: {e.response.status_code} - {e.response.text}"})
+            try:
+                backend_error = e.response.json()
+                if "error" not in backend_error:
+                    backend_error = {"error": {"message": e.response.text, "type": "api_error", "code": status_code}}
+            except Exception:
+                backend_error = {"error": {"message": e.response.text, "type": "api_error", "code": status_code}}
+            error_msg = json.dumps(backend_error)
             yield f"data: {error_msg}\n\ndata: [DONE]\n\n".encode("utf-8")
         except httpx.RequestError as e:
             status_code = 502
-            error_msg = json.dumps({"error": f"Backend connection error: {str(e)}"})
+            error_msg = json.dumps({"error": {"message": f"Backend connection error: {str(e)}", "type": "api_error", "code": 502}})
             yield f"data: {error_msg}\n\ndata: [DONE]\n\n".encode("utf-8")
         finally:
             duration = (time.time() - start_time) * 1000
