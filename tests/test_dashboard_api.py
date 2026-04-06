@@ -33,3 +33,15 @@ def test_api_logs():
     assert isinstance(data, list)
     assert len(data) == 1
     assert data[0]["model_id"] == "model-api"
+
+def test_api_stats_html():
+    response = client.get("/api/stats/html")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "Total Requests" in response.text
+
+def test_api_logs_html():
+    response = client.get("/api/logs/html?limit=10&offset=0")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "model-api" in response.text

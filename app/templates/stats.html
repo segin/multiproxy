@@ -1,0 +1,12 @@
+<div class="card">
+    <div class="card-title">Total Requests</div>
+    <div class="metric-value">{{ stats.total_requests }}</div>
+</div>
+<div class="card">
+    <div class="card-title">Total Tokens</div>
+    <div class="metric-value">{{ stats.total_tokens }}</div>
+</div>
+<div class="card">
+    <div class="card-title">Avg Latency</div>
+    <div class="metric-value">{{ "%.2f"|format(stats.avg_duration_ms) }} ms</div>
+</div>

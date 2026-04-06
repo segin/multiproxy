@@ -1,0 +1,38 @@
+<table>
+    <thead>
+        <tr>
+            <th>Time</th>
+            <th>Model</th>
+            <th>Backend</th>
+            <th>Status</th>
+            <th>Tokens</th>
+            <th>Latency</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in logs %}
+        <tr>
+            <td>{{ log.timestamp_formatted }}</td>
+            <td>{{ log.model_id }}</td>
+            <td>{{ log.backend_url }}</td>
+            <td>
+                {% if log.status_code == 200 %}
+                <span class="badge success">200</span>
+                {% else %}
+                <span class="badge error">{{ log.status_code }}</span>
+                {% endif %}
+            </td>
+            <td>{{ log.total_tokens }}</td>
+            <td>{{ "%.2f"|format(log.duration_ms) }} ms</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<div style="margin-top: 1rem;">
+    {% if offset > 0 %}
+    <button hx-get="/api/logs/html?offset={{ offset - limit }}" hx-target="closest div" hx-swap="outerHTML">Previous</button>
+    {% endif %}
+    {% if logs|length == limit %}
+    <button hx-get="/api/logs/html?offset={{ offset + limit }}" hx-target="closest div" hx-swap="outerHTML">Next</button>
+    {% endif %}
+</div>
