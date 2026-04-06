@@ -1,6 +1,6 @@
 # Implementation Plan: Core Proxy Functionality
 
-## Phase 1: Project Scaffolding and Core Logic
+## Phase 1: Project Scaffolding and Core Logic [checkpoint: e20c76f]
 - [x] Task: Project Initialization and Setup c0ae74e
     - [ ] Initialize Python environment and dependencies.
     - [ ] Create basic project structure.
@@ -13,7 +13,7 @@
     - [ ] Implement the core mapping of model IDs to backend instances.
     - [ ] Support load balancing across multiple backends for a single model ID.
     - [ ] Write tests for the mapping and routing logic.
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Project Scaffolding and Core Logic' (Protocol in workflow.md) [checkpoint: ]
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Project Scaffolding and Core Logic' (Protocol in workflow.md) [checkpoint: e20c76f]
 
 ## Phase 2: Proxy Implementation
 - [ ] Task: OpenAI Compatible API Endpoint
