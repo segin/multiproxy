@@ -28,4 +28,12 @@
 - [ ] Task: Log-Centric Activity Views
     - [ ] Build a filterable, paginated HTML table for detailed request logs.
     - [ ] Use HTMX to allow pagination and filtering without full page reloads.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: HTMX Frontend Implementation' (Protocol in workflow.md) [checkpoint: ]
+## Phase 4: Backend Token Limit Discovery
+- [~] Task: Backend Context Size Discovery
+    - [ ] Implement an async startup/refresh task to query `/props` on each configured backend.
+    - [ ] Cache the discovered `n_ctx` token limit for each model/backend.
+    - [ ] Update the `chat_completions` endpoint to proactively reject requests that exceed this limit with a 400 error.
+- [ ] Task: Model Discovery Endpoint
+    - [ ] Implement a `GET /v1/models` endpoint that returns all configured models and their discovered token limits.
+    - [ ] Write unit tests for the discovery endpoints and validation logic.
+- [ ] Task: Conductor - User Manual Verification 'Phase 4: Backend Token Limit Discovery' (Protocol in workflow.md) [checkpoint: ]
