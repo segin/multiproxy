@@ -28,11 +28,11 @@
     - [ ] Implement async request forwarding to backend `llama-server` instances.
     - [ ] Handle backend errors and basic failover logic.
     - [ ] Write tests for backend routing and error handling.
-- [~] Task: Streaming Response Support
+- [x] Task: Streaming Response Support 29e7bbb
     - [ ] Implement full support for SSE (Server-Sent Events) streaming.
     - [ ] Ensure streaming chunks are correctly forwarded to the client.
     - [ ] Write tests for streaming response integrity.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Proxy Implementation' (Protocol in workflow.md) [checkpoint: ]
+- [~] Task: Conductor - User Manual Verification 'Phase 2: Proxy Implementation' (Protocol in workflow.md) [checkpoint: ]
 
 ## Phase 3: Observability and Statistics
 - [ ] Task: Token Usage Tracking and Logging
