@@ -205,3 +205,14 @@ def test_proxy_no_backends_available(monkeypatch):
     }
     response = client.post("/v1/chat/completions", json=payload)
     assert response.status_code == 503
+
+def test_proxy_rejects_exceeding_context(mock_config):
+    payload = {
+        "model": "test-model",
+        "messages": [{"role": "user", "content": "Ping"}],
+    }
+    with patch("app.main.get_backend_limit", return_value=1):
+        with patch("app.main.count_tokens", return_value=5):
+            response = client.post("/v1/chat/completions", json=payload)
+            assert response.status_code == 400
+            assert "exceeds the available context size" in response.text

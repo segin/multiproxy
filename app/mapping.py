@@ -1,5 +1,5 @@
 import random
-from app.config import Config
+from app.config import Config, Backend
 
 class ModelNotFoundError(Exception):
     pass
@@ -7,7 +7,7 @@ class ModelNotFoundError(Exception):
 class NoBackendsAvailableError(Exception):
     pass
 
-def get_backend_url(model_id: str, config: Config) -> str:
+def get_backend(model_id: str, config: Config) -> Backend:
     # Find mapping for the model
     mapping = next((m for m in config.model_mappings if m.model_id == model_id), None)
     
@@ -18,13 +18,16 @@ def get_backend_url(model_id: str, config: Config) -> str:
     if not mapping:
         raise ModelNotFoundError(f"Model '{model_id}' is not mapped to any backends and no valid default model is configured.")
     
-    # Collect all available backend URLs for the mapped backend IDs
-    backend_urls = [
-        b.url for b in config.backends if b.id in mapping.backend_ids
+    # Collect all available backends for the mapped backend IDs
+    backends = [
+        b for b in config.backends if b.id in mapping.backend_ids
     ]
     
-    if not backend_urls:
+    if not backends:
         raise NoBackendsAvailableError(f"No configured backends found for model '{model_id}'.")
     
     # Load balancing via random choice
-    return random.choice(backend_urls)
+    return random.choice(backends)
+
+def get_backend_url(model_id: str, config: Config) -> str:
+    return get_backend(model_id, config).url
