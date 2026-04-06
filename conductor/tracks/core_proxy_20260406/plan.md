@@ -39,8 +39,8 @@
     - [ ] Implement token counting logic (e.g., using `tiktoken` or approximate counting).
     - [ ] Create a logging mechanism for each request/response pair.
     - [ ] Write tests for token counting and logging accuracy.
-- [~] Task: SQLite Integration for Metrics Storage
+- [x] Task: SQLite Integration for Metrics Storage 8bc9229
     - [ ] Set up SQLite database schema for statistics.
     - [ ] Implement async persistence of logs and aggregate stats.
     - [ ] Write tests for database operations and data integrity.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Observability and Statistics' (Protocol in workflow.md) [checkpoint: ]
+- [~] Task: Conductor - User Manual Verification 'Phase 3: Observability and Statistics' (Protocol in workflow.md) [checkpoint: ]
