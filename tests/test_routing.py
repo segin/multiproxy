@@ -96,6 +96,97 @@ def test_proxy_backend_connection_error(mock_config):
         response = client.post("/v1/chat/completions", json=payload)
         assert response.status_code == 502
 
+import json
+from fastapi.responses import StreamingResponse
+
+def test_proxy_forwards_streaming_request(mock_config):
+    payload = {
+        "model": "test-model",
+        "messages": [{"role": "user", "content": "Ping"}],
+        "stream": True
+    }
+    
+    mock_request = Request("POST", "http://fake-backend:8080/v1/chat/completions")
+    
+    async def mock_stream_generator():
+        yield b'data: {"id": "1", "choices": [{"delta": {"content": "Po"}}]}'
+        yield b'\n\n'
+        yield b'data: {"id": "1", "choices": [{"delta": {"content": "ng"}}]}'
+        yield b'\n\n'
+        yield b'data: [DONE]'
+        yield b'\n\n'
+        
+    mock_response = Response(status_code=200, request=mock_request)
+    mock_response.aiter_bytes = mock_stream_generator
+    
+    # We need to mock the context manager returned by stream()
+    class MockStreamContextManager:
+        async def __aenter__(self):
+            return mock_response
+        async def __aexit__(self, exc_type, exc_val, exc_tb):
+            pass
+            
+    with patch("httpx.AsyncClient.stream") as mock_stream:
+        mock_stream.return_value = MockStreamContextManager()
+        
+        response = client.post("/v1/chat/completions", json=payload)
+        
+        assert response.status_code == 200
+        # When streaming, the TestClient response has iter_lines()
+        lines = list(response.iter_lines())
+        
+        # Verify the content contains the streamed chunks
+        assert 'data: {"id": "1", "choices": [{"delta": {"content": "Po"}}]}' in lines
+        assert 'data: {"id": "1", "choices": [{"delta": {"content": "ng"}}]}' in lines
+        assert 'data: [DONE]' in lines
+def test_proxy_forwards_streaming_request_http_error(mock_config):
+    payload = {
+        "model": "test-model",
+        "messages": [{"role": "user", "content": "Ping"}],
+        "stream": True
+    }
+    
+    mock_request = Request("POST", "http://fake-backend:8080/v1/chat/completions")
+    mock_response = Response(status_code=500, content=b"Stream Error", request=mock_request)
+    
+    class MockStreamContextManagerError:
+        async def __aenter__(self):
+            raise HTTPStatusError(
+                message="Stream Error",
+                request=mock_request,
+                response=mock_response
+            )
+        async def __aexit__(self, exc_type, exc_val, exc_tb):
+            pass
+            
+    with patch("httpx.AsyncClient.stream") as mock_stream:
+        mock_stream.return_value = MockStreamContextManagerError()
+        with pytest.raises(RuntimeError):
+            client.post("/v1/chat/completions", json=payload)
+
+def test_proxy_forwards_streaming_request_connection_error(mock_config):
+    payload = {
+        "model": "test-model",
+        "messages": [{"role": "user", "content": "Ping"}],
+        "stream": True
+    }
+    
+    mock_request = Request("POST", "http://fake-backend:8080/v1/chat/completions")
+    
+    class MockStreamContextManagerConnError:
+        async def __aenter__(self):
+            raise RequestError(
+                message="Stream connection refused",
+                request=mock_request
+            )
+        async def __aexit__(self, exc_type, exc_val, exc_tb):
+            pass
+            
+    with patch("httpx.AsyncClient.stream") as mock_stream:
+        mock_stream.return_value = MockStreamContextManagerConnError()
+        with pytest.raises(RuntimeError):
+            client.post("/v1/chat/completions", json=payload)
+
 def test_proxy_no_backends_available(monkeypatch):
     config = Config(
         backends=[],
