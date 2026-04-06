@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Ensure we're in the project directory and the virtual environment is activated
+export PYTHONPATH=.
+if [ -f "venv/bin/activate" ]; then
+    source venv/bin/activate
+else
+    echo "Warning: Virtual environment not found at venv/bin/activate. Make sure you run this script from the project root."
+fi
+
 # Start the proxy server on port 8001
 echo "Starting proxy server on port 8001..."
 uvicorn app.main:app --host 0.0.0.0 --port 8001 &
