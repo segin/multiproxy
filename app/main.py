@@ -34,6 +34,8 @@ async def stream_backend_response(url: str, payload: dict, start_time: float, re
     async with httpx.AsyncClient() as client:
         try:
             async with client.stream("POST", url, json=payload, timeout=60.0) as response:
+                if response.is_error:
+                    await response.aread()
                 response.raise_for_status()
                 status_code = response.status_code
                 async for chunk in response.aiter_bytes():
@@ -43,7 +45,6 @@ async def stream_backend_response(url: str, payload: dict, start_time: float, re
                     yield chunk
         except httpx.HTTPStatusError as e:
             status_code = e.response.status_code
-            await e.response.aread()
             error_msg = json.dumps({"error": f"Backend HTTP error: {e.response.status_code} - {e.response.text}"})
             yield f"data: {error_msg}\n\ndata: [DONE]\n\n".encode("utf-8")
         except httpx.RequestError as e:
