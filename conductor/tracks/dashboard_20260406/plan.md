@@ -9,11 +9,11 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Dashboard Application Setup' (Protocol in workflow.md) [checkpoint: 06d723b]
 
 ## Phase 2: Statistics API and Data Access
-- [~] Task: SQLite Data Access Layer
+- [x] Task: SQLite Data Access Layer 85cae5d
     - [ ] Implement database queries for aggregate metrics (total tokens, average duration, request counts per model/backend).
     - [ ] Implement queries for recent logs with pagination support.
     - [ ] Write unit tests for these data access functions.
-- [ ] Task: Internal API Endpoints
+- [~] Task: Internal API Endpoints
     - [ ] Create FastAPI endpoints in the dashboard app that return JSON or HTML fragments (for HTMX).
     - [ ] Test the internal API endpoints to ensure correct data formatting.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Statistics API and Data Access' (Protocol in workflow.md) [checkpoint: ]
