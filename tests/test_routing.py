@@ -162,8 +162,10 @@ def test_proxy_forwards_streaming_request_http_error(mock_config):
             
     with patch("httpx.AsyncClient.stream") as mock_stream:
         mock_stream.return_value = MockStreamContextManagerError()
-        with pytest.raises(RuntimeError):
-            client.post("/v1/chat/completions", json=payload)
+        response = client.post("/v1/chat/completions", json=payload)
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "Backend HTTP error" in content
 
 def test_proxy_forwards_streaming_request_connection_error(mock_config):
     payload = {
@@ -185,8 +187,10 @@ def test_proxy_forwards_streaming_request_connection_error(mock_config):
             
     with patch("httpx.AsyncClient.stream") as mock_stream:
         mock_stream.return_value = MockStreamContextManagerConnError()
-        with pytest.raises(RuntimeError):
-            client.post("/v1/chat/completions", json=payload)
+        response = client.post("/v1/chat/completions", json=payload)
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "Backend connection error" in content
 
 def test_proxy_no_backends_available(monkeypatch):
     config = Config(

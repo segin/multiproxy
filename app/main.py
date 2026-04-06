@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="MultiProxy", lifespan=lifespan)
 
 async def stream_backend_response(url: str, payload: dict, start_time: float, request_model: str):
-    prompt_tokens = sum(count_tokens(m["content"], request_model) for m in payload.get("messages", []))
+    prompt_tokens = sum(count_tokens(m.get("content", ""), request_model) if isinstance(m, dict) else count_tokens(m.content, request_model) for m in payload.get("messages", []))
     completion_tokens = 0
     status_code = 200
     
@@ -43,10 +43,12 @@ async def stream_backend_response(url: str, payload: dict, start_time: float, re
                     yield chunk
         except httpx.HTTPStatusError as e:
             status_code = e.response.status_code
-            raise HTTPException(status_code=status_code, detail=f"Backend error: {e.response.text}")
+            error_msg = json.dumps({"error": f"Backend HTTP error: {e.response.status_code} - {e.response.text}"})
+            yield f"data: {error_msg}\n\ndata: [DONE]\n\n".encode("utf-8")
         except httpx.RequestError as e:
             status_code = 502
-            raise HTTPException(status_code=502, detail=f"Error connecting to backend: {str(e)}")
+            error_msg = json.dumps({"error": f"Backend connection error: {str(e)}"})
+            yield f"data: {error_msg}\n\ndata: [DONE]\n\n".encode("utf-8")
         finally:
             duration = (time.time() - start_time) * 1000
             usage = UsageInfo(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens, total_tokens=prompt_tokens + completion_tokens)
