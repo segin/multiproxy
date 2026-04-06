@@ -16,7 +16,11 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Project Scaffolding and Core Logic' (Protocol in workflow.md) [checkpoint: e20c76f]
 
 ## Phase 2: Proxy Implementation
-- [ ] Task: OpenAI Compatible API Endpoint
+- [x] Task: Default Model Routing Support 8396567
+    - [ ] Update configuration schema to include an optional `default_model_id` setting.
+    - [ ] Update mapping logic to fallback to the `default_model_id` if a requested model doesn't exist.
+    - [ ] Write tests for default model fallback routing.
+- [~] Task: OpenAI Compatible API Endpoint
     - [ ] Implement basic OpenAI `/v1/chat/completions` endpoint using FastAPI.
     - [ ] Ensure request/response schemas match OpenAI specifications.
     - [ ] Write tests for the API endpoint structure.
