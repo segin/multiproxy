@@ -36,6 +36,15 @@ def test_get_backend_url_model_not_found():
     with pytest.raises(ModelNotFoundError):
         get_backend_url("nonexistent-model", config)
 
+def test_get_backend_url_default_model_fallback():
+    config = Config(
+        default_model_id="gpt-5.4",
+        backends=[Backend(id="b1", url="http://localhost:8081")],
+        model_mappings=[ModelMapping(model_id="gpt-5.4", backend_ids=["b1"])]
+    )
+    url = get_backend_url("nonexistent-model", config)
+    assert url == "http://localhost:8081"
+
 def test_get_backend_url_no_backends_configured():
     config = Config(
         backends=[Backend(id="b1", url="http://localhost:8081")],

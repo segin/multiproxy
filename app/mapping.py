@@ -10,8 +10,13 @@ class NoBackendsAvailableError(Exception):
 def get_backend_url(model_id: str, config: Config) -> str:
     # Find mapping for the model
     mapping = next((m for m in config.model_mappings if m.model_id == model_id), None)
+    
+    # Fallback to default_model_id if available
+    if not mapping and config.default_model_id:
+        mapping = next((m for m in config.model_mappings if m.model_id == config.default_model_id), None)
+        
     if not mapping:
-        raise ModelNotFoundError(f"Model '{model_id}' is not mapped to any backends.")
+        raise ModelNotFoundError(f"Model '{model_id}' is not mapped to any backends and no valid default model is configured.")
     
     # Collect all available backend URLs for the mapped backend IDs
     backend_urls = [

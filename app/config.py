@@ -14,6 +14,7 @@ class ModelMapping(BaseModel):
 class Config(BaseModel):
     backends: List[Backend]
     model_mappings: List[ModelMapping]
+    default_model_id: str | None = None
 
 def load_config(file_path: str | Path) -> Config:
     path = Path(file_path)
