@@ -1,11 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MultiProxy Dashboard</title>
-</head>
-<body>
-    <h1>MultiProxy Stats</h1>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block content %}
+<div class="grid-3" hx-get="/api/stats/html" hx-trigger="load, every 5s">
+    <div class="card">
+        <div class="card-title">Loading Stats...</div>
+        <div class="metric-value">--</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">Recent Activity</div>
+    <div hx-get="/api/logs/html" hx-trigger="load, every 5s">
+        Loading activity logs...
+    </div>
+</div>
+{% endblock %}
