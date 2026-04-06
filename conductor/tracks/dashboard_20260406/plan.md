@@ -19,10 +19,10 @@
 - [~] Task: Conductor - User Manual Verification 'Phase 2: Statistics API and Data Access' (Protocol in workflow.md) [checkpoint: ]
 
 ## Phase 3: HTMX Frontend Implementation
-- [~] Task: Base Template and Styling
+- [x] Task: Base Template and Styling 0866c9a
     - [ ] Create the core `base.html` Jinja2 template.
     - [ ] Add CSS styling adhering to the "Utilitarian / Industrial" guidelines (high contrast, clear typography).
-- [ ] Task: High-Level Summary Widgets
+- [~] Task: High-Level Summary Widgets
     - [ ] Build HTMX components to display total token consumption and system health metrics.
     - [ ] Integrate these widgets into the main dashboard view.
 - [ ] Task: Log-Centric Activity Views
