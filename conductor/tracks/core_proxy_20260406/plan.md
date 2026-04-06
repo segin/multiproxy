@@ -24,11 +24,11 @@
     - [ ] Implement basic OpenAI `/v1/chat/completions` endpoint using FastAPI.
     - [ ] Ensure request/response schemas match OpenAI specifications.
     - [ ] Write tests for the API endpoint structure.
-- [~] Task: Multi-backend Request Routing
+- [x] Task: Multi-backend Request Routing 2a215b2
     - [ ] Implement async request forwarding to backend `llama-server` instances.
     - [ ] Handle backend errors and basic failover logic.
     - [ ] Write tests for backend routing and error handling.
-- [ ] Task: Streaming Response Support
+- [~] Task: Streaming Response Support
     - [ ] Implement full support for SSE (Server-Sent Events) streaming.
     - [ ] Ensure streaming chunks are correctly forwarded to the client.
     - [ ] Write tests for streaming response integrity.
