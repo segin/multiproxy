@@ -8,17 +8,23 @@ import httpx
 import time
 import json
 from app.logger import log_request, init_db
+from app.config import load_config
 from contextlib import asynccontextmanager
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    init_db()
-    yield
-
-app = FastAPI(title="MultiProxy", lifespan=lifespan)
 
 # This will be initialized properly later; for tests we can patch it
 current_config = Config(backends=[], model_mappings=[])
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global current_config
+    init_db()
+    try:
+        current_config = load_config("config.yaml")
+    except FileNotFoundError:
+        print("Warning: config.yaml not found. Using empty configuration.")
+    yield
+
+app = FastAPI(title="MultiProxy", lifespan=lifespan)
 
 async def stream_backend_response(url: str, payload: dict, start_time: float, request_model: str):
     prompt_tokens = sum(count_tokens(m["content"], request_model) for m in payload.get("messages", []))
