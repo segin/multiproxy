@@ -13,10 +13,10 @@
     - [ ] Implement database queries for aggregate metrics (total tokens, average duration, request counts per model/backend).
     - [ ] Implement queries for recent logs with pagination support.
     - [ ] Write unit tests for these data access functions.
-- [~] Task: Internal API Endpoints
+- [x] Task: Internal API Endpoints d249e2b
     - [ ] Create FastAPI endpoints in the dashboard app that return JSON or HTML fragments (for HTMX).
     - [ ] Test the internal API endpoints to ensure correct data formatting.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Statistics API and Data Access' (Protocol in workflow.md) [checkpoint: ]
+- [~] Task: Conductor - User Manual Verification 'Phase 2: Statistics API and Data Access' (Protocol in workflow.md) [checkpoint: ]
 
 ## Phase 3: HTMX Frontend Implementation
 - [ ] Task: Base Template and Styling
