@@ -22,12 +22,13 @@
 - [x] Task: Base Template and Styling 0866c9a
     - [ ] Create the core `base.html` Jinja2 template.
     - [ ] Add CSS styling adhering to the "Utilitarian / Industrial" guidelines (high contrast, clear typography).
-- [~] Task: High-Level Summary Widgets
+- [x] Task: High-Level Summary Widgets ff477c1
     - [ ] Build HTMX components to display total token consumption and system health metrics.
     - [ ] Integrate these widgets into the main dashboard view.
-- [ ] Task: Log-Centric Activity Views
+- [x] Task: Log-Centric Activity Views ff477c1
     - [ ] Build a filterable, paginated HTML table for detailed request logs.
     - [ ] Use HTMX to allow pagination and filtering without full page reloads.
+- [~] Task: Conductor - User Manual Verification 'Phase 3: HTMX Frontend Implementation' (Protocol in workflow.md) [checkpoint: ]
 
 ## Phase 4: Backend Token Limit Discovery [checkpoint: 6f3c9de]
 - [x] Task: Backend Context Size Discovery 19ded86
