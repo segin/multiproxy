@@ -15,7 +15,7 @@
     - [ ] Write tests for the mapping and routing logic.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Project Scaffolding and Core Logic' (Protocol in workflow.md) [checkpoint: e20c76f]
 
-## Phase 2: Proxy Implementation
+## Phase 2: Proxy Implementation [checkpoint: de5d932]
 - [x] Task: Default Model Routing Support 8396567
     - [ ] Update configuration schema to include an optional `default_model_id` setting.
     - [ ] Update mapping logic to fallback to the `default_model_id` if a requested model doesn't exist.
@@ -32,10 +32,10 @@
     - [ ] Implement full support for SSE (Server-Sent Events) streaming.
     - [ ] Ensure streaming chunks are correctly forwarded to the client.
     - [ ] Write tests for streaming response integrity.
-- [~] Task: Conductor - User Manual Verification 'Phase 2: Proxy Implementation' (Protocol in workflow.md) [checkpoint: ]
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Proxy Implementation' (Protocol in workflow.md) [checkpoint: de5d932]
 
 ## Phase 3: Observability and Statistics
-- [ ] Task: Token Usage Tracking and Logging
+- [~] Task: Token Usage Tracking and Logging
     - [ ] Implement token counting logic (e.g., using `tiktoken` or approximate counting).
     - [ ] Create a logging mechanism for each request/response pair.
     - [ ] Write tests for token counting and logging accuracy.
