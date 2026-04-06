@@ -1,0 +1,8 @@
+{
+  "track_id": "core_proxy_20260406",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-04-06T12:00:00Z",
+  "updated_at": "2026-04-06T12:00:00Z",
+  "description": "Build core multi-backend proxy functionality with OpenAI-compatible API and model mapping"
+}
