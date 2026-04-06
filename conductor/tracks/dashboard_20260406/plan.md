@@ -19,7 +19,7 @@
 - [~] Task: Conductor - User Manual Verification 'Phase 2: Statistics API and Data Access' (Protocol in workflow.md) [checkpoint: ]
 
 ## Phase 3: HTMX Frontend Implementation
-- [ ] Task: Base Template and Styling
+- [~] Task: Base Template and Styling
     - [ ] Create the core `base.html` Jinja2 template.
     - [ ] Add CSS styling adhering to the "Utilitarian / Industrial" guidelines (high contrast, clear typography).
 - [ ] Task: High-Level Summary Widgets
@@ -28,7 +28,8 @@
 - [ ] Task: Log-Centric Activity Views
     - [ ] Build a filterable, paginated HTML table for detailed request logs.
     - [ ] Use HTMX to allow pagination and filtering without full page reloads.
-## Phase 4: Backend Token Limit Discovery
+
+## Phase 4: Backend Token Limit Discovery [checkpoint: 6f3c9de]
 - [x] Task: Backend Context Size Discovery 19ded86
     - [ ] Implement an async startup/refresh task to query `/props` on each configured backend.
     - [ ] Cache the discovered `n_ctx` token limit for each model/backend.
@@ -36,4 +37,4 @@
 - [x] Task: Model Discovery Endpoint 19ded86
     - [ ] Implement a `GET /v1/models` endpoint that returns all configured models and their discovered token limits.
     - [ ] Write unit tests for the discovery endpoints and validation logic.
-- [~] Task: Conductor - User Manual Verification 'Phase 4: Backend Token Limit Discovery' (Protocol in workflow.md) [checkpoint: ]
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Backend Token Limit Discovery' (Protocol in workflow.md) [checkpoint: 6f3c9de]
