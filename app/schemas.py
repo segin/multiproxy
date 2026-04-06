@@ -1,10 +1,10 @@
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 from pydantic import BaseModel, Field
 import time
 
 class ChatMessage(BaseModel):
     role: str
-    content: str
+    content: Union[str, List[Dict[str, Any]]]
 
 class ChatCompletionRequest(BaseModel):
     model: str

@@ -18,3 +18,21 @@ def test_count_tokens_fallback():
     
 def test_count_tokens_empty():
     assert count_tokens("", "gpt-4") == 0
+    assert count_tokens([], "gpt-4") == 0
+
+def test_count_tokens_list_content():
+    content = [
+        {"type": "text", "text": "Hello,"},
+        {"text": " world!"},
+        {"type": "image_url", "image_url": "..."},
+        {"type": "text"} # Missing text key
+    ]
+    # "Hello," + " world!" + "" -> "Hello, world!" -> ~4 tokens in cl100k_base
+    token_count = count_tokens(content, "gpt-3.5-turbo")
+    assert token_count == 4 # "Hello", ",", " world", "!"
+    
+def test_count_tokens_list_no_text():
+    content = [
+        {"type": "image_url", "image_url": "..."}
+    ]
+    assert count_tokens(content, "gpt-3.5-turbo") == 0
