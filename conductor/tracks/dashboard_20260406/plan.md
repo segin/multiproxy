@@ -6,10 +6,10 @@
     - [ ] Configure the application to serve Jinja2 templates.
     - [ ] Create a startup script or configuration that allows running the proxy and the dashboard on separate ports simultaneously.
     - [ ] Write unit tests verifying the dashboard app initializes correctly.
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Dashboard Application Setup' (Protocol in workflow.md) [checkpoint: ]
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Dashboard Application Setup' (Protocol in workflow.md) [checkpoint: 06d723b]
 
 ## Phase 2: Statistics API and Data Access
-- [ ] Task: SQLite Data Access Layer
+- [~] Task: SQLite Data Access Layer
     - [ ] Implement database queries for aggregate metrics (total tokens, average duration, request counts per model/backend).
     - [ ] Implement queries for recent logs with pagination support.
     - [ ] Write unit tests for these data access functions.
