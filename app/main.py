@@ -3,13 +3,19 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from app.schemas import ChatCompletionRequest, UsageInfo
 from app.config import Config
 from app.mapping import get_backend_url, ModelNotFoundError, NoBackendsAvailableError
-from app.logger import log_request
 from app.tokens import count_tokens
 import httpx
 import time
 import json
+from app.logger import log_request, init_db
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="MultiProxy")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
+app = FastAPI(title="MultiProxy", lifespan=lifespan)
 
 # This will be initialized properly later; for tests we can patch it
 current_config = Config(backends=[], model_mappings=[])

@@ -1,7 +1,17 @@
-from app.logger import log_request, get_logs, clear_logs
+import os
+import sqlite3
+import pytest
+from app.logger import log_request, get_logs, clear_logs, init_db
 from app.schemas import UsageInfo
 
-def test_logger_records_event():
+@pytest.fixture(autouse=True)
+def setup_test_db(tmp_path):
+    db_path = tmp_path / "test_logs.db"
+    init_db(str(db_path))
+    yield
+    init_db("logs.db")
+
+def test_logger_records_event_to_sqlite():
     clear_logs()
     
     usage = UsageInfo(prompt_tokens=10, completion_tokens=20, total_tokens=30)
@@ -21,4 +31,6 @@ def test_logger_records_event():
     assert log_entry["backend_url"] == "http://fake-backend:8080"
     assert log_entry["status_code"] == 200
     assert log_entry["duration_ms"] == 150.5
-    assert log_entry["usage"].total_tokens == 30
+    assert log_entry["prompt_tokens"] == 10
+    assert log_entry["completion_tokens"] == 20
+    assert log_entry["total_tokens"] == 30
