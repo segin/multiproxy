@@ -2,7 +2,7 @@ import pytest
 import sqlite3
 from app.logger import init_db, log_request, clear_logs
 from app.schemas import UsageInfo
-from app.stats import get_aggregate_stats, get_recent_logs
+from app.stats import get_aggregate_stats, get_recent_logs, get_time_series_stats
 
 @pytest.fixture(autouse=True)
 def setup_test_db(tmp_path):
@@ -50,3 +50,21 @@ def test_get_aggregate_stats_empty():
     assert stats["total_tokens"] == 0
     assert stats["avg_duration_ms"] == 0.0
     assert len(stats["model_requests"]) == 0
+
+def test_get_time_series_stats():
+    # Hour aggregation
+    stats = get_time_series_stats("hour")
+    assert len(stats) >= 1
+    assert "label" in stats[0]
+    assert "tokens" in stats[0]
+    
+    # Day aggregation
+    stats = get_time_series_stats("day")
+    assert len(stats) >= 1
+    
+    # Month aggregation
+    stats = get_time_series_stats("month")
+    assert len(stats) >= 1
+    
+    # Invalid period
+    assert get_time_series_stats("invalid") == []

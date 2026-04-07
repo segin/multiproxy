@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from app.stats import get_aggregate_stats, get_recent_logs
+from app.stats import get_aggregate_stats, get_recent_logs, get_time_series_stats
 import datetime
 
 app = FastAPI(title="MultiProxy Dashboard")
@@ -17,9 +17,19 @@ async def index(request: Request):
         request=request, name="index.html"
     )
 
+@app.get("/advanced", response_class=HTMLResponse)
+async def advanced_view(request: Request):
+    return templates.TemplateResponse(
+        request=request, name="advanced.html"
+    )
+
 @app.get("/api/stats")
 async def api_stats():
     return get_aggregate_stats()
+
+@app.get("/api/stats/time-series/{period}")
+async def api_time_series(period: str):
+    return get_time_series_stats(period)
 
 @app.get("/api/logs")
 async def api_logs(limit: int = 50, offset: int = 0):

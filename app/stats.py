@@ -59,3 +59,41 @@ def get_recent_logs(limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
             LIMIT ? OFFSET ?
         """, (limit, offset))
         return [dict(row) for row in cursor.fetchall()]
+
+def get_time_series_stats(period: str) -> List[Dict[str, Any]]:
+    """
+    Groups usage by time period.
+    period: 'hour' (last 24h), 'day' (last 30d), 'month' (last 12m)
+    """
+    with sqlite3.connect(logger._DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        if period == "hour":
+            # Last 24 hours
+            since = time.time() - (24 * 3600)
+            strftime_fmt = "%Y-%m-%d %H:00"
+        elif period == "day":
+            # Last 30 days
+            since = time.time() - (30 * 24 * 3600)
+            strftime_fmt = "%Y-%m-%d"
+        elif period == "month":
+            # Last 12 months
+            since = time.time() - (365 * 24 * 3600)
+            strftime_fmt = "%Y-%m"
+        else:
+            return []
+
+        cursor.execute(f"""
+            SELECT 
+                strftime('{strftime_fmt}', datetime(timestamp, 'unixepoch', 'localtime')) as label,
+                COUNT(*) as requests,
+                SUM(total_tokens) as tokens,
+                SUM(COALESCE(prompt_cached_tokens, 0) + COALESCE(cache_read_input_tokens, 0)) as cached_tokens
+            FROM logs
+            WHERE timestamp >= ?
+            GROUP BY label
+            ORDER BY label ASC
+        """, (since,))
+        
+        return [dict(row) for row in cursor.fetchall()]
