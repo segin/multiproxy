@@ -46,6 +46,8 @@ def test_proxy_forwards_request(mock_config):
         response = client.post("/v1/chat/completions", json=payload)
         
         assert response.status_code == 200
+        # Verify the 300s timeout was used
+        assert mock_post.call_args[1]["timeout"] == 600.0
         data = response.json()
         assert data["choices"][0]["message"]["content"] == "Pong"
         
@@ -96,6 +98,7 @@ def test_proxy_backend_connection_error(mock_config):
         )
         response = client.post("/v1/chat/completions", json=payload)
         assert response.status_code == 502
+        assert "Connection error (RequestError): Connection refused" in response.text
 
 import json
 from fastapi.responses import StreamingResponse
@@ -133,6 +136,8 @@ def test_proxy_forwards_streaming_request(mock_config):
         response = client.post("/v1/chat/completions", json=payload)
         
         assert response.status_code == 200
+        # Verify timeout
+        assert mock_stream.call_args[1]["timeout"] == 300.0
         # When streaming, the TestClient response has iter_lines()
         lines = list(response.iter_lines())
         
@@ -190,7 +195,7 @@ def test_proxy_forwards_streaming_request_connection_error(mock_config):
         response = client.post("/v1/chat/completions", json=payload)
         assert response.status_code == 200
         content = response.content.decode()
-        assert "Backend connection error" in content
+        assert "Connection error (RequestError): Stream connection refused" in content
 
 def test_proxy_no_backends_available(monkeypatch):
     config = Config(
