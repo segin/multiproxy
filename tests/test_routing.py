@@ -137,7 +137,7 @@ def test_proxy_forwards_streaming_request(mock_config):
         
         assert response.status_code == 200
         # Verify timeout
-        assert mock_stream.call_args[1]["timeout"] == 300.0
+        assert mock_stream.call_args[1]["timeout"] == 600.0
         # When streaming, the TestClient response has iter_lines()
         lines = list(response.iter_lines())
         
