@@ -26,10 +26,18 @@ async def api_logs(limit: int = 50, offset: int = 0):
     return get_recent_logs(limit=limit, offset=offset)
 
 @app.get("/api/stats/html", response_class=HTMLResponse)
-async def api_stats_html(request: Request):
-    stats = get_aggregate_stats()
+async def api_stats_html(request: Request, period: str = "all"):
+    hours = None
+    if period == "hour":
+        hours = 1
+    elif period == "day":
+        hours = 24
+    elif period == "month":
+        hours = 24 * 30
+        
+    stats = get_aggregate_stats(hours=hours)
     return templates.TemplateResponse(
-        request=request, name="stats.html", context={"stats": stats}
+        request=request, name="stats.html", context={"stats": stats, "period": period}
     )
 
 @app.get("/api/logs/html", response_class=HTMLResponse)

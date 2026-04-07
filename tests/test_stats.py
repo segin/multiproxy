@@ -21,6 +21,8 @@ def setup_test_db(tmp_path):
 def test_get_aggregate_stats():
     stats = get_aggregate_stats()
     assert stats["total_requests"] == 3
+    assert stats["total_input_tokens"] == 35 # 10 + 20 + 5
+    assert stats["total_output_tokens"] == 15 # 5 + 10 + 0
     assert stats["total_tokens"] == 50
     # avg duration = (100+200+50)/3 = 116.66
     assert round(stats["avg_duration_ms"], 2) == 116.67

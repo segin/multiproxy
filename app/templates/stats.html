@@ -1,10 +1,22 @@
+<div class="card" style="grid-column: 1 / -1; padding: 0.5rem 1rem; border-bottom: none; margin-bottom: -1rem;">
+    <div style="color: var(--accent-color); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px;">
+        Viewing Stats: {{ period.replace("_", " ") if period else "all time" }}
+    </div>
+</div>
 <div class="card">
     <div class="card-title">Total Requests</div>
     <div class="metric-value">{{ "{:,}".format(stats.total_requests) }}</div>
 </div>
 <div class="card">
-    <div class="card-title">Total Tokens</div>
-    <div class="metric-value">{{ "{:,}".format(stats.total_tokens) }}</div>
+    <div class="card-title">Input Tokens</div>
+    <div class="metric-value">{{ "{:,}".format(stats.total_input_tokens) }}</div>
+    <div style="font-size: 0.8rem; color: var(--text-muted);">
+        CACHED: {{ "{:,}".format(stats.total_cached_tokens) }}
+    </div>
+</div>
+<div class="card">
+    <div class="card-title">Output Tokens</div>
+    <div class="metric-value">{{ "{:,}".format(stats.total_output_tokens) }}</div>
 </div>
 <div class="card">
     <div class="card-title">Avg Latency</div>

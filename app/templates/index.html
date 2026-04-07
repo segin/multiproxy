@@ -1,7 +1,15 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="grid-3" hx-get="/api/stats/html" hx-trigger="load, every 5s">
+<div class="card" style="margin-bottom: 1rem; padding: 1rem; display: flex; align-items: center; gap: 1rem;">
+    <span style="color: var(--text-muted); text-transform: uppercase; font-size: 0.8rem;">Filter Period:</span>
+    <button hx-get="/api/stats/html?period=hour" hx-target="#stats-container" class="badge">Last Hour</button>
+    <button hx-get="/api/stats/html?period=day" hx-target="#stats-container" class="badge">Last 24h</button>
+    <button hx-get="/api/stats/html?period=month" hx-target="#stats-container" class="badge">Last Month</button>
+    <button hx-get="/api/stats/html?period=all" hx-target="#stats-container" class="badge">All Time</button>
+</div>
+
+<div id="stats-container" class="grid-3" hx-get="/api/stats/html?period=all" hx-trigger="load, every 30s">
     <div class="card">
         <div class="card-title">Loading Stats...</div>
         <div class="metric-value">--</div>
