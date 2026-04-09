@@ -2,9 +2,16 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from app.stats import get_aggregate_stats, get_recent_logs, get_time_series_stats
+from app.logger import setup_logging, get_system_logs
+from contextlib import asynccontextmanager
 import datetime
 
-app = FastAPI(title="MultiProxy Dashboard")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    setup_logging()
+    yield
+
+app = FastAPI(title="MultiProxy Dashboard", lifespan=lifespan)
 templates = Jinja2Templates(directory="app/templates")
 
 @app.get("/health")
@@ -57,5 +64,14 @@ async def api_logs_html(request: Request, limit: int = 10, offset: int = 0):
         log["timestamp_formatted"] = datetime.datetime.fromtimestamp(log["timestamp"]).strftime('%Y-%m-%d %H:%M:%S')
     return templates.TemplateResponse(
         request=request, name="logs.html", context={"logs": logs, "limit": limit, "offset": offset}
+    )
+
+@app.get("/api/system-logs/html", response_class=HTMLResponse)
+async def api_system_logs_html(request: Request, limit: int = 20):
+    logs = get_system_logs(limit=limit)
+    for log in logs:
+        log["timestamp_formatted"] = datetime.datetime.fromtimestamp(log["timestamp"]).strftime('%Y-%m-%d %H:%M:%S')
+    return templates.TemplateResponse(
+        request=request, name="system_logs.html", context={"logs": logs}
     )
 

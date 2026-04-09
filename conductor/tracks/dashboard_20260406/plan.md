@@ -10,32 +10,31 @@
 
 ## Phase 2: Statistics API and Data Access
 - [x] Task: SQLite Data Access Layer 85cae5d
+- [x] Task: Internal API Endpoints d249e2b
+- [x] Task: Time-based Granular Statistics abfc1f4
     - [ ] Implement database queries for aggregate metrics (total tokens, average duration, request counts per model/backend).
     - [ ] Implement queries for recent logs with pagination support.
+    - [ ] Support time-period filtering (hourly, daily, monthly).
     - [ ] Write unit tests for these data access functions.
-- [x] Task: Internal API Endpoints d249e2b
-    - [ ] Create FastAPI endpoints in the dashboard app that return JSON or HTML fragments (for HTMX).
-    - [ ] Test the internal API endpoints to ensure correct data formatting.
 - [~] Task: Conductor - User Manual Verification 'Phase 2: Statistics API and Data Access' (Protocol in workflow.md) [checkpoint: ]
 
 ## Phase 3: HTMX Frontend Implementation
 - [x] Task: Base Template and Styling 0866c9a
-    - [ ] Create the core `base.html` Jinja2 template.
-    - [ ] Add CSS styling adhering to the "Utilitarian / Industrial" guidelines (high contrast, clear typography).
 - [x] Task: High-Level Summary Widgets ff477c1
+- [x] Task: Log-Centric Activity Views ff477c1
+- [x] Task: Time-period Selector UI abfc1f4
     - [ ] Build HTMX components to display total token consumption and system health metrics.
     - [ ] Integrate these widgets into the main dashboard view.
-- [x] Task: Log-Centric Activity Views ff477c1
-    - [ ] Build a filterable, paginated HTML table for detailed request logs.
-    - [ ] Use HTMX to allow pagination and filtering without full page reloads.
+    - [ ] Implement UI controls to switch between different statistics timeframes.
 - [~] Task: Conductor - User Manual Verification 'Phase 3: HTMX Frontend Implementation' (Protocol in workflow.md) [checkpoint: ]
 
-## Phase 4: Backend Token Limit Discovery [checkpoint: 6f3c9de]
-- [x] Task: Backend Context Size Discovery 19ded86
-    - [ ] Implement an async startup/refresh task to query `/props` on each configured backend.
-    - [ ] Cache the discovered `n_ctx` token limit for each model/backend.
-    - [ ] Update the `chat_completions` endpoint to proactively reject requests that exceed this limit with a 400 error.
-- [x] Task: Model Discovery Endpoint 19ded86
-    - [ ] Implement a `GET /v1/models` endpoint that returns all configured models and their discovered token limits.
-    - [ ] Write unit tests for the discovery endpoints and validation logic.
-- [x] Task: Conductor - User Manual Verification 'Phase 4: Backend Token Limit Discovery' (Protocol in workflow.md) [checkpoint: 6f3c9de]
+## Phase 5: Advanced Historical Analytics
+- [x] Task: Time-series Data Aggregation d7de8fb
+- [x] Task: Interactive Charting UI d7de8fb
+    - [ ] Implement database queries to group usage by hour (for 24h), day (for 30d), and month (for 1y).
+    - [ ] Create API endpoints to return this time-series data in JSON format.
+    - [ ] Integrate a charting library (e.g., Chart.js) into the dashboard.
+    - [ ] Create an "Advanced View" page (`advanced.html`) with interactive bar/line charts.
+    - [ ] Add a navigation toggle to "Summon" the advanced view from the main dashboard using HTMX.
+    - [ ] Write unit tests for the aggregation logic.
+- [~] Task: Conductor - User Manual Verification 'Phase 5: Advanced Historical Analytics' (Protocol in workflow.md) [checkpoint: ]

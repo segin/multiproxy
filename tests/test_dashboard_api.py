@@ -8,7 +8,7 @@ client = TestClient(app)
 
 @pytest.fixture(autouse=True)
 def setup_test_db(tmp_path):
-    db_path = tmp_path / "test_dashboard_api.db"
+    db_path = tmp_path / "test_dashboard_api_local.db"
     init_db(str(db_path))
     clear_logs()
     
@@ -16,7 +16,6 @@ def setup_test_db(tmp_path):
     log_request("model-api", "http://back-api", 200, 150.0, UsageInfo(prompt_tokens=10, completion_tokens=20, total_tokens=30))
     
     yield
-    init_db("logs.db")
 
 def test_api_stats():
     response = client.get("/api/stats")
@@ -45,3 +44,13 @@ def test_api_logs_html():
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
     assert "model-api" in response.text
+
+def test_api_system_logs_html():
+    import logging
+    # TestClient context manager to trigger lifespan and logging setup
+    with TestClient(app) as client:
+        logging.getLogger("test_logger").info("Test system log message")
+        response = client.get("/api/system-logs/html?limit=10")
+        assert response.status_code == 200
+        assert "text/html" in response.headers["content-type"]
+        assert "Test system log message" in response.text

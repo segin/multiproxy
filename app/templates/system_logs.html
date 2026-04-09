@@ -1,0 +1,29 @@
+<table>
+    <thead>
+        <tr>
+            <th>Time</th>
+            <th>Level</th>
+            <th>Source</th>
+            <th>Message</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in logs %}
+        <tr>
+            <td style="white-space: nowrap;">{{ log.timestamp_formatted }}</td>
+            <td>
+                <span class="badge {% if log.level == 'ERROR' or log.level == 'CRITICAL' %}error{% endif %}">
+                    {{ log.level }}
+                </span>
+            </td>
+            <td style="color: var(--text-muted); font-size: 0.8rem;">{{ log.name }}</td>
+            <td>
+                <div style="font-size: 0.9rem;">{{ log.message }}</div>
+                {% if log.traceback %}
+                <pre style="font-size: 0.7rem; color: var(--error-color); background: #000; padding: 0.5rem; margin-top: 0.5rem; overflow-x: auto;">{{ log.traceback }}</pre>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

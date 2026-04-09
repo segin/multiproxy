@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.coverage
+.pytest_cache/
+logs.db
+test_*.py
+!tests/test_*.py

@@ -6,7 +6,7 @@ from app.stats import get_aggregate_stats, get_recent_logs, get_time_series_stat
 
 @pytest.fixture(autouse=True)
 def setup_test_db(tmp_path):
-    db_path = tmp_path / "test_stats.db"
+    db_path = tmp_path / "test_stats_local.db"
     init_db(str(db_path))
     clear_logs()
     
@@ -16,7 +16,6 @@ def setup_test_db(tmp_path):
     log_request("model-a", "http://back1", 500, 50.0, UsageInfo(prompt_tokens=5, completion_tokens=0, total_tokens=5))
     
     yield
-    init_db("logs.db")
 
 def test_get_aggregate_stats():
     stats = get_aggregate_stats()

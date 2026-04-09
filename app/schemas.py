@@ -33,6 +33,11 @@ class UsageInfo(BaseModel):
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
+    prompt_tokens_details: Optional[Dict[str, int]] = None
+    completion_tokens_details: Optional[Dict[str, int]] = None
+    # Anthropic style fields
+    cache_creation_input_tokens: Optional[int] = None
+    cache_read_input_tokens: Optional[int] = None
 
 class ChatCompletionResponse(BaseModel):
     model_config = ConfigDict(extra="allow")

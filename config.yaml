@@ -1,12 +1,10 @@
 backends:
   - id: installation-00
-    url: http://installation-00:8082
-
+    url: http://installation-00:8080
 
 model_mappings:
   - model_id: qwen3.5-35b-a3b
     backend_ids:
       - installation-00
-
 
 default_model_id: qwen3.5-35b-a3b

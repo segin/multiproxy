@@ -8,15 +8,27 @@
     <div class="metric-value">{{ "{:,}".format(stats.total_requests) }}</div>
 </div>
 <div class="card">
-    <div class="card-title">Input Tokens</div>
-    <div class="metric-value">{{ "{:,}".format(stats.total_input_tokens) }}</div>
-    <div style="font-size: 0.8rem; color: var(--text-muted);">
-        CACHED: {{ "{:,}".format(stats.total_cached_tokens) }}
-    </div>
+    <div class="card-title">Total Tokens</div>
+    <div class="metric-value">{{ "{:,}".format(stats.total_tokens) }}</div>
 </div>
 <div class="card">
-    <div class="card-title">Output Tokens</div>
-    <div class="metric-value">{{ "{:,}".format(stats.total_output_tokens) }}</div>
+    <div class="card-title">Token Breakdown</div>
+    <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+        <div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase;">Input</span>
+                <span style="font-size: 1.1rem;">{{ "{:,}".format(stats.total_input_tokens) }}</span>
+            </div>
+            <div style="font-size: 0.7rem; color: var(--text-muted); display: flex; gap: 1rem; margin-top: 0.25rem; border-top: 1px solid var(--border-color); padding-top: 0.25rem;">
+                <span>REGULAR: {{ "{:,}".format(stats.total_input_tokens - stats.total_cached_tokens) }}</span>
+                <span>CACHED: {{ "{:,}".format(stats.total_cached_tokens) }}</span>
+            </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--border-color); padding-top: 0.5rem;">
+            <span style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase;">Output</span>
+            <span style="font-size: 1.1rem;">{{ "{:,}".format(stats.total_output_tokens) }}</span>
+        </div>
+    </div>
 </div>
 <div class="card">
     <div class="card-title">Avg Latency</div>

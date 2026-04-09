@@ -34,10 +34,11 @@ async def stream_backend_response(url: str, payload: dict, start_time: float, re
     status_code = 200
     error_details = None
     accumulated_content = ""
+    usage_obj = None
     
     async with httpx.AsyncClient() as client:
         try:
-            async with client.stream("POST", url, json=payload, timeout=300.0) as response:
+            async with client.stream("POST", url, json=payload, timeout=600.0) as response:
                 if response.is_error:
                     await response.aread()
                 response.raise_for_status()
@@ -54,7 +55,9 @@ async def stream_backend_response(url: str, payload: dict, start_time: float, re
                                     delta = data_json["choices"][0].get("delta", {})
                                     if "content" in delta and delta["content"]:
                                         accumulated_content += delta["content"]
-                            except json.JSONDecodeError:
+                                if "usage" in data_json and data_json["usage"]:
+                                    usage_obj = UsageInfo(**data_json["usage"])
+                            except Exception:
                                 pass
                     yield (chunk + "\n\n").encode("utf-8")
             
@@ -83,7 +86,10 @@ async def stream_backend_response(url: str, payload: dict, start_time: float, re
             yield f"data: {error_msg}\n\ndata: [DONE]\n\n".encode("utf-8")
         finally:
             duration = (time.time() - start_time) * 1000
-            usage = UsageInfo(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens, total_tokens=prompt_tokens + completion_tokens)
+            if usage_obj:
+                usage = usage_obj
+            else:
+                usage = UsageInfo(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens, total_tokens=prompt_tokens + completion_tokens)
             log_request(request_model, url, status_code, duration, usage, error_details)
 
 @app.post("/v1/chat/completions")
@@ -100,7 +106,14 @@ async def chat_completions(request: ChatCompletionRequest, background_tasks: Bac
         background_tasks.add_task(log_request, request.model, "N/A", 503, (time.time() - start_time) * 1000, None, str(e))
         raise HTTPException(status_code=503, detail=str(e))
         
-    prompt_tokens = sum(count_tokens(m.content if isinstance(m.content, str) else m.model_dump()["content"], resolved_model) for m in request.messages)
+    payload_dict = request.model_dump(exclude_none=True)
+    # Estimate prompt tokens by counting the JSON representation of messages and tools
+    # This provides a much more accurate estimate for complex tool-calling workloads
+    content_to_count = json.dumps(payload_dict.get("messages", []))
+    if "tools" in payload_dict:
+        content_to_count += json.dumps(payload_dict["tools"])
+    
+    prompt_tokens = count_tokens(content_to_count, resolved_model)
     limit = get_backend_limit(backend.id)
     if limit is not None and prompt_tokens > limit:
         err_msg = f"request ({prompt_tokens} tokens) exceeds the available context size ({limit} tokens), try increasing it"
