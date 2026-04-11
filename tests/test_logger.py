@@ -24,7 +24,10 @@ def test_logger_records_event_to_sqlite():
         backend_url="http://fake-backend:8080",
         status_code=200,
         duration_ms=150.5,
-        usage=usage
+        usage=usage,
+        error_message=None,
+        ttft_ms=50.0,
+        tokens_per_second=100.5
     )
     
     logs = get_logs()
@@ -39,3 +42,5 @@ def test_logger_records_event_to_sqlite():
     assert log_entry["completion_tokens"] == 20
     assert log_entry["total_tokens"] == 30
     assert log_entry["prompt_cached_tokens"] == 5
+    assert log_entry["ttft_ms"] == 50.0
+    assert log_entry["tokens_per_second"] == 100.5

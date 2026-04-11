@@ -11,9 +11,9 @@ def setup_test_db(tmp_path):
     clear_logs()
     
     # Insert some dummy data
-    log_request("model-a", "http://back1", 200, 100.0, UsageInfo(prompt_tokens=10, completion_tokens=5, total_tokens=15))
-    log_request("model-b", "http://back2", 200, 200.0, UsageInfo(prompt_tokens=20, completion_tokens=10, total_tokens=30))
-    log_request("model-a", "http://back1", 500, 50.0, UsageInfo(prompt_tokens=5, completion_tokens=0, total_tokens=5))
+    log_request("model-a", "http://back1", 200, 100.0, UsageInfo(prompt_tokens=10, completion_tokens=5, total_tokens=15), None, 50.0, 100.0)
+    log_request("model-b", "http://back2", 200, 200.0, UsageInfo(prompt_tokens=20, completion_tokens=10, total_tokens=30), None, 100.0, 100.0)
+    log_request("model-a", "http://back1", 500, 50.0, UsageInfo(prompt_tokens=5, completion_tokens=0, total_tokens=5), None, None, None)
     
     yield
 
@@ -25,6 +25,7 @@ def test_get_aggregate_stats():
     assert stats["total_tokens"] == 50
     # avg duration = (100+200+50)/3 = 116.66
     assert round(stats["avg_duration_ms"], 2) == 116.67
+    assert stats["avg_tokens_per_second"] == 100.0
     
     # Check per model requests
     models = stats["model_requests"]

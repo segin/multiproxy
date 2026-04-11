@@ -22,7 +22,8 @@ def get_aggregate_stats(hours: int = None) -> Dict[str, Any]:
                 SUM(completion_tokens) as total_output_tokens,
                 SUM(total_tokens) as total_tokens,
                 SUM(COALESCE(prompt_cached_tokens, 0) + COALESCE(cache_read_input_tokens, 0)) as total_cached_tokens,
-                AVG(duration_ms) as avg_duration_ms
+                AVG(duration_ms) as avg_duration_ms,
+                AVG(tokens_per_second) as avg_tokens_per_second
             FROM logs
             {where_clause}
         """, params)
@@ -35,6 +36,7 @@ def get_aggregate_stats(hours: int = None) -> Dict[str, Any]:
             totals["total_tokens"] = 0
             totals["total_cached_tokens"] = 0
             totals["avg_duration_ms"] = 0.0
+            totals["avg_tokens_per_second"] = 0.0
             
         # Model metrics
         cursor.execute(f"""

@@ -31,6 +31,15 @@
     </div>
 </div>
 <div class="card">
-    <div class="card-title">Avg Latency</div>
-    <div class="metric-value">{{ "%.2f"|format(stats.avg_duration_ms) }} ms</div>
+    <div class="card-title">Performance</div>
+    <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <span style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase;">Avg Latency</span>
+            <span style="font-size: 1.1rem;">{{ "%.2f"|format(stats.avg_duration_ms) }} ms</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--border-color); padding-top: 0.5rem;">
+            <span style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase;">Avg Speed</span>
+            <span style="font-size: 1.1rem;">{% if stats.avg_tokens_per_second %}{{ "%.2f"|format(stats.avg_tokens_per_second) }} t/s{% else %}--{% endif %}</span>
+        </div>
+    </div>
 </div>

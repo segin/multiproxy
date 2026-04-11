@@ -29,7 +29,9 @@ def init_db(db_path: str = _DEFAULT_DB_PATH):
                 prompt_cached_tokens INTEGER,
                 cache_creation_input_tokens INTEGER,
                 cache_read_input_tokens INTEGER,
-                error_message TEXT
+                error_message TEXT,
+                ttft_ms REAL,
+                tokens_per_second REAL
             )
         """)
         # System/Internal Logs
@@ -44,9 +46,10 @@ def init_db(db_path: str = _DEFAULT_DB_PATH):
             )
         """)
         # Add columns if they don't exist
-        for col in ["prompt_cached_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "error_message"]:
+        for col in ["prompt_cached_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "error_message", "ttft_ms", "tokens_per_second"]:
             try:
-                cursor.execute(f"ALTER TABLE logs ADD COLUMN {col} INTEGER")
+                col_type = "REAL" if col in ["ttft_ms", "tokens_per_second"] else "TEXT" if col == "error_message" else "INTEGER"
+                cursor.execute(f"ALTER TABLE logs ADD COLUMN {col} {col_type}")
             except sqlite3.OperationalError:
                 pass 
         conn.commit()
@@ -91,7 +94,9 @@ def log_request(
     status_code: int,
     duration_ms: float,
     usage: Optional[UsageInfo] = None,
-    error_message: Optional[str] = None
+    error_message: Optional[str] = None,
+    ttft_ms: Optional[float] = None,
+    tokens_per_second: Optional[float] = None
 ):
     prompt_cached = usage.prompt_tokens_details.get("cached_tokens") if usage and usage.prompt_tokens_details else None
     cache_creation = usage.cache_creation_input_tokens if usage else None
@@ -104,8 +109,8 @@ def log_request(
                 timestamp, model_id, backend_url, status_code, duration_ms, 
                 prompt_tokens, completion_tokens, total_tokens, 
                 prompt_cached_tokens, cache_creation_input_tokens, cache_read_input_tokens,
-                error_message
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                error_message, ttft_ms, tokens_per_second
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             time.time(),
             model_id,
@@ -118,7 +123,9 @@ def log_request(
             prompt_cached,
             cache_creation,
             cache_read,
-            error_message
+            error_message,
+            ttft_ms,
+            tokens_per_second
         ))
         conn.commit()
 

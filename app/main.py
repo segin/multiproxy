@@ -35,6 +35,7 @@ async def stream_backend_response(url: str, payload: dict, start_time: float, re
     error_details = None
     accumulated_content = ""
     usage_obj = None
+    ttft_ms = None
     
     async with httpx.AsyncClient() as client:
         try:
@@ -54,6 +55,8 @@ async def stream_backend_response(url: str, payload: dict, start_time: float, re
                                 if "choices" in data_json and len(data_json["choices"]) > 0:
                                     delta = data_json["choices"][0].get("delta", {})
                                     if "content" in delta and delta["content"]:
+                                        if ttft_ms is None:
+                                            ttft_ms = (time.time() - start_time) * 1000
                                         accumulated_content += delta["content"]
                                 if "usage" in data_json and data_json["usage"]:
                                     usage_obj = UsageInfo(**data_json["usage"])
@@ -88,9 +91,17 @@ async def stream_backend_response(url: str, payload: dict, start_time: float, re
             duration = (time.time() - start_time) * 1000
             if usage_obj:
                 usage = usage_obj
+                completion_tokens = usage.completion_tokens
             else:
                 usage = UsageInfo(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens, total_tokens=prompt_tokens + completion_tokens)
-            log_request(request_model, url, status_code, duration, usage, error_details)
+            
+            tokens_per_second = None
+            if ttft_ms is not None and duration > ttft_ms:
+                generation_time_s = (duration - ttft_ms) / 1000.0
+                if generation_time_s > 0 and completion_tokens > 0:
+                    tokens_per_second = completion_tokens / generation_time_s
+                    
+            log_request(request_model, url, status_code, duration, usage, error_details, ttft_ms, tokens_per_second)
 
 @app.post("/v1/chat/completions")
 async def chat_completions(request: ChatCompletionRequest, background_tasks: BackgroundTasks):
@@ -161,7 +172,7 @@ async def chat_completions(request: ChatCompletionRequest, background_tasks: Bac
             duration = (time.time() - start_time) * 1000
             if not usage:
                 usage = UsageInfo(prompt_tokens=prompt_tokens, completion_tokens=0, total_tokens=prompt_tokens)
-            background_tasks.add_task(log_request, resolved_model, target_url, status_code, duration, usage, error_details)
+            background_tasks.add_task(log_request, resolved_model, target_url, status_code, duration, usage, error_details, None, None)
 
 @app.get("/v1/models")
 async def list_models():

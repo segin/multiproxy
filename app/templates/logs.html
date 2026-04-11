@@ -7,6 +7,7 @@
             <th>Status</th>
             <th>Tokens</th>
             <th>Latency</th>
+            <th>Speed</th>
             <th>Details</th>
         </tr>
     </thead>
@@ -25,6 +26,7 @@
             </td>
             <td>{{ "{:,}".format(log.total_tokens) if log.total_tokens is not none else "--" }}</td>
             <td>{{ "%.2f"|format(log.duration_ms) }} ms</td>
+            <td>{% if log.tokens_per_second %}{{ "%.1f"|format(log.tokens_per_second) }} t/s{% else %}--{% endif %}</td>
             <td>
                 {% if log.error_message %}
                 <span style="color: var(--error-color); font-size: 0.8rem; word-break: break-all;">
