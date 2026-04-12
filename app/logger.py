@@ -4,9 +4,19 @@ import os
 import logging
 from typing import List, Dict, Any, Optional
 from app.schemas import UsageInfo
+from contextlib import contextmanager
 
 _DEFAULT_DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs.db")
 _DB_PATH = _DEFAULT_DB_PATH
+
+@contextmanager
+def get_db_connection(db_path: str):
+    conn = sqlite3.connect(db_path)
+    try:
+        with conn:
+            yield conn
+    finally:
+        conn.close()
 
 def init_db(db_path: str = _DEFAULT_DB_PATH):
     global _DB_PATH
@@ -66,13 +76,12 @@ class DBLogHandler(logging.Handler):
                 import traceback as tb
                 traceback = "".join(tb.format_exception(*record.exc_info))
             
-            with sqlite3.connect(_DB_PATH) as conn:
+            with get_db_connection(_DB_PATH) as conn:
                 cursor = conn.cursor()
                 cursor.execute(
                     "INSERT INTO system_logs (timestamp, level, name, message, traceback) VALUES (?, ?, ?, ?, ?)",
                     (timestamp, level, name, message, traceback)
                 )
-                conn.commit()
         except Exception:
             self.handleError(record)
 
@@ -102,7 +111,7 @@ def log_request(
     cache_creation = usage.cache_creation_input_tokens if usage else None
     cache_read = usage.cache_read_input_tokens if usage else None
 
-    with sqlite3.connect(_DB_PATH) as conn:
+    with get_db_connection(_DB_PATH) as conn:
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO logs (
@@ -127,30 +136,28 @@ def log_request(
             ttft_ms,
             tokens_per_second
         ))
-        conn.commit()
 
 def get_logs() -> List[Dict[str, Any]]:
     # Initialize DB if it hasn't been created yet (mainly for safety)
     init_db(_DB_PATH)
-    with sqlite3.connect(_DB_PATH) as conn:
+    with get_db_connection(_DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM logs ORDER BY timestamp DESC")
         return [dict(row) for row in cursor.fetchall()]
 
 def get_system_logs(limit: int = 50) -> List[Dict[str, Any]]:
-    with sqlite3.connect(_DB_PATH) as conn:
+    with get_db_connection(_DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM system_logs ORDER BY timestamp DESC LIMIT ?", (limit,))
         return [dict(row) for row in cursor.fetchall()]
 
 def clear_logs():
-    with sqlite3.connect(_DB_PATH) as conn:
+    with get_db_connection(_DB_PATH) as conn:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM logs")
         cursor.execute("DELETE FROM system_logs")
-        conn.commit()
 
 # Auto-initialize with default path
 init_db()

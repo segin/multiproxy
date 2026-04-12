@@ -4,7 +4,7 @@ from typing import Dict, Any, List
 from app import logger
 
 def get_aggregate_stats(hours: int = None) -> Dict[str, Any]:
-    with sqlite3.connect(logger._DB_PATH) as conn:
+    with logger.get_db_connection(logger._DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
@@ -52,7 +52,7 @@ def get_aggregate_stats(hours: int = None) -> Dict[str, Any]:
         return totals
 
 def get_recent_logs(limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
-    with sqlite3.connect(logger._DB_PATH) as conn:
+    with logger.get_db_connection(logger._DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute("""
@@ -67,7 +67,7 @@ def get_time_series_stats(period: str) -> List[Dict[str, Any]]:
     Groups usage by time period.
     period: 'hour' (last 24h), 'day' (last 30d), 'month' (last 12m)
     """
-    with sqlite3.connect(logger._DB_PATH) as conn:
+    with logger.get_db_connection(logger._DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
