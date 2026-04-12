@@ -53,10 +53,10 @@ async def stream_backend_response(url: str, payload: dict, start_time: float, re
                             try:
                                 data_json = json.loads(data_str)
                                 if "choices" in data_json and len(data_json["choices"]) > 0:
+                                    if ttft_ms is None:
+                                        ttft_ms = (time.time() - start_time) * 1000
                                     delta = data_json["choices"][0].get("delta", {})
                                     if "content" in delta and delta["content"]:
-                                        if ttft_ms is None:
-                                            ttft_ms = (time.time() - start_time) * 1000
                                         accumulated_content += delta["content"]
                                 if "usage" in data_json and data_json["usage"]:
                                     usage_obj = UsageInfo(**data_json["usage"])
@@ -135,6 +135,12 @@ async def chat_completions(request: ChatCompletionRequest, background_tasks: Bac
     payload = request.model_dump(exclude_none=True)
     
     if request.stream:
+        # Force the backend to include token usage in the stream so we get accurate metrics
+        if "stream_options" not in payload:
+            payload["stream_options"] = {"include_usage": True}
+        elif isinstance(payload["stream_options"], dict):
+            payload["stream_options"]["include_usage"] = True
+            
         return StreamingResponse(stream_backend_response(target_url, payload, start_time, resolved_model, prompt_tokens), media_type="text/event-stream")
     
     status_code = 200
