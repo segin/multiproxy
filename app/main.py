@@ -140,6 +140,8 @@ async def chat_completions(request: ChatCompletionRequest, background_tasks: Bac
     status_code = 200
     usage = None
     error_details = None
+    ttft_ms = None
+    tokens_per_second = None
     
     async with httpx.AsyncClient() as client:
         try:
@@ -155,6 +157,11 @@ async def chat_completions(request: ChatCompletionRequest, background_tasks: Bac
                 usage = UsageInfo(**data["usage"])
             else:
                 usage = UsageInfo(prompt_tokens=prompt_tokens, completion_tokens=0, total_tokens=prompt_tokens)
+            
+            if "timings" in data:
+                ttft_ms = data.get("timings", {}).get("prompt_ms")
+                tokens_per_second = data.get("timings", {}).get("predicted_per_second")
+                
             return JSONResponse(status_code=status_code, content=data)
         except httpx.HTTPStatusError as e:
             status_code = e.response.status_code
@@ -172,7 +179,7 @@ async def chat_completions(request: ChatCompletionRequest, background_tasks: Bac
             duration = (time.time() - start_time) * 1000
             if not usage:
                 usage = UsageInfo(prompt_tokens=prompt_tokens, completion_tokens=0, total_tokens=prompt_tokens)
-            background_tasks.add_task(log_request, resolved_model, target_url, status_code, duration, usage, error_details, None, None)
+            background_tasks.add_task(log_request, resolved_model, target_url, status_code, duration, usage, error_details, ttft_ms, tokens_per_second)
 
 @app.get("/v1/models")
 async def list_models():

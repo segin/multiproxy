@@ -35,7 +35,8 @@ def test_proxy_forwards_request(mock_config):
             "created": 1234567890,
             "model": "test-model",
             "choices": [{"index": 0, "message": {"role": "assistant", "content": "Pong"}, "finish_reason": "stop"}],
-            "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30}
+            "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
+            "timings": {"prompt_ms": 15.5, "predicted_per_second": 35.2}
         },
         request=mock_request
     )
