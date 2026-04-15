@@ -1,15 +1,15 @@
 # Implementation Plan: Responses API Support
 
 ## Phase 1: Schemas and Basic Routing
-- [ ] Task: Response API Schemas
+- [x] Task: Response API Schemas
     - [ ] Create Pydantic models for `/v1/responses` requests (`instructions`, `input`, `tools`, etc.).
     - [ ] Create Pydantic models for `/v1/responses` responses (`output` array, etc.).
-- [ ] Task: Non-Streaming Endpoint Implementation
+- [x] Task: Non-Streaming Endpoint Implementation
     - [ ] Add the `@app.post("/v1/responses")` route in `app/main.py`.
     - [ ] Forward the request to the chosen backend (or fallback).
     - [ ] Handle model limit validation and fallback logic similarly to `/v1/chat/completions`.
     - [ ] Write unit tests for non-streaming requests.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Schemas and Basic Routing' (Protocol in workflow.md) [checkpoint: ]
+- [~] Task: Conductor - User Manual Verification 'Phase 1: Schemas and Basic Routing' (Protocol in workflow.md) [checkpoint: ]
 
 ## Phase 2: Streaming and Observability
 - [ ] Task: Streaming Implementation
