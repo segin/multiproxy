@@ -48,3 +48,27 @@ class ChatCompletionResponse(BaseModel):
     choices: List[ChatChoice]
     usage: Optional[UsageInfo] = None
     system_fingerprint: Optional[str] = None
+
+class ResponsesRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    model: str
+    instructions: Optional[str] = None
+    input: Optional[Union[str, List[Dict[str, Any]]]] = None
+    stream: Optional[bool] = False
+    tools: Optional[List[Dict[str, Any]]] = None
+    previous_response_id: Optional[str] = None
+
+class ResponseItem(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    type: str
+    message: Optional[ChatMessage] = None
+    text: Optional[str] = None
+
+class ResponsesResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    id: str
+    object: str = "response"
+    created: int = Field(default_factory=lambda: int(time.time()))
+    model: str
+    output: List[ResponseItem]
+    usage: Optional[UsageInfo] = None
