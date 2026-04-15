@@ -187,6 +187,83 @@ async def chat_completions(request: ChatCompletionRequest, background_tasks: Bac
                 usage = UsageInfo(prompt_tokens=prompt_tokens, completion_tokens=0, total_tokens=prompt_tokens)
             background_tasks.add_task(log_request, resolved_model, target_url, status_code, duration, usage, error_details, ttft_ms, tokens_per_second)
 
+async def stream_responses_backend_response(url: str, payload: dict, start_time: float, request_model: str, prompt_tokens: int):
+    completion_tokens = 0
+    status_code = 200
+    error_details = None
+    accumulated_content = ""
+    usage_obj = None
+    ttft_ms = None
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            async with client.stream("POST", url, json=payload, timeout=600.0) as response:
+                if response.is_error:
+                    await response.aread()
+                response.raise_for_status()
+                status_code = response.status_code
+                async for chunk in response.aiter_lines():
+                    if not chunk:
+                        continue
+                    if chunk.startswith("data: "):
+                        data_str = chunk[6:]
+                        if data_str.strip() != "[DONE]":
+                            try:
+                                data_json = json.loads(data_str)
+                                if "output" in data_json and len(data_json["output"]) > 0:
+                                    if ttft_ms is None:
+                                        ttft_ms = (time.time() - start_time) * 1000
+                                    for item in data_json["output"]:
+                                        if item.get("type") == "text" and "text" in item:
+                                            accumulated_content += item["text"]
+                                        elif item.get("type") == "message" and "message" in item and "content" in item["message"]:
+                                            if item["message"]["content"]:
+                                                accumulated_content += item["message"]["content"]
+                                if "usage" in data_json and data_json["usage"]:
+                                    usage_obj = UsageInfo(**data_json["usage"])
+                            except Exception:
+                                pass
+                    yield (chunk + "\n\n").encode("utf-8")
+            
+            # Final token count for the accumulated content
+            completion_tokens = count_tokens(accumulated_content, request_model)
+        except httpx.HTTPStatusError as e:
+            status_code = e.response.status_code
+            try:
+                backend_error = e.response.json()
+                if "error" not in backend_error:
+                    backend_error = {"error": {"message": e.response.text, "type": "api_error", "code": status_code}}
+            except Exception:
+                backend_error = {"error": {"message": e.response.text, "type": "api_error", "code": status_code}}
+            error_msg = json.dumps(backend_error)
+            error_details = backend_error.get("error", {}).get("message", e.response.text)
+            yield f"data: {error_msg}\n\ndata: [DONE]\n\n".encode("utf-8")
+        except httpx.RequestError as e:
+            status_code = 502
+            error_details = f"Connection error ({type(e).__name__}): {str(e)}"
+            error_msg = json.dumps({"error": {"message": error_details, "type": "api_error", "code": 502}})
+            yield f"data: {error_msg}\n\ndata: [DONE]\n\n".encode("utf-8")
+        except Exception as e:
+            status_code = 500
+            error_details = f"Internal proxy stream error ({type(e).__name__}): {str(e)}"
+            error_msg = json.dumps({"error": {"message": error_details, "type": "api_error", "code": 500}})
+            yield f"data: {error_msg}\n\ndata: [DONE]\n\n".encode("utf-8")
+        finally:
+            duration = (time.time() - start_time) * 1000
+            if usage_obj:
+                usage = usage_obj
+                completion_tokens = usage.completion_tokens
+            else:
+                usage = UsageInfo(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens, total_tokens=prompt_tokens + completion_tokens)
+            
+            tokens_per_second = None
+            if ttft_ms is not None and duration > ttft_ms:
+                generation_time_s = (duration - ttft_ms) / 1000.0
+                if generation_time_s > 0 and completion_tokens > 0:
+                    tokens_per_second = completion_tokens / generation_time_s
+                    
+            log_request(request_model, url, status_code, duration, usage, error_details, ttft_ms, tokens_per_second)
+
 @app.post("/v1/responses")
 async def responses_api(request: ResponsesRequest, background_tasks: BackgroundTasks):
     start_time = time.time()
@@ -217,12 +294,16 @@ async def responses_api(request: ResponsesRequest, background_tasks: BackgroundT
         background_tasks.add_task(log_request, resolved_model, backend.url, 400, (time.time() - start_time) * 1000, UsageInfo(prompt_tokens=prompt_tokens, completion_tokens=0, total_tokens=prompt_tokens), err_msg, None, None)
         raise HTTPException(status_code=400, detail={"error": {"code": 400, "message": err_msg, "type": "exceed_context_size_error"}})
 
-    target_url = f"{backend.url.rstrip('/')}/v1/responses"
+    target_url = f"{backend.url.rstrip("/")}/v1/responses"
     payload = request.model_dump(exclude_none=True)
     
     if request.stream:
-        # Not handling streaming yet for responses api in this step
-        raise HTTPException(status_code=501, detail="Streaming not implemented for /v1/responses yet")
+        if "stream_options" not in payload:
+            payload["stream_options"] = {"include_usage": True}
+        elif isinstance(payload["stream_options"], dict):
+            payload["stream_options"]["include_usage"] = True
+            
+        return StreamingResponse(stream_responses_backend_response(target_url, payload, start_time, resolved_model, prompt_tokens), media_type="text/event-stream")
     
     status_code = 200
     usage = None

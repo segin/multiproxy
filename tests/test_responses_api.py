@@ -87,14 +87,68 @@ def test_responses_api_internal_error(mock_config):
         response = client.post("/v1/responses", json=payload)
         assert response.status_code == 500
 
-def test_responses_api_streaming_not_implemented(mock_config):
+def test_responses_api_streaming(mock_config):
     payload = {
         "model": "gpt-5",
         "input": "Hello",
         "stream": True
     }
-    response = client.post("/v1/responses", json=payload)
-    assert response.status_code == 501
+    
+    mock_request = Request("POST", "http://fake-backend:8080/v1/responses")
+    
+    async def mock_stream_generator():
+        yield 'data: {"id": "1", "output": [{"type": "text", "text": "Hi "}]}'
+        yield '\n\n'
+        yield 'data: {"id": "1", "output": [{"type": "message", "message": {"role": "assistant", "content": "there"}}]}'
+        yield '\n\n'
+        yield 'data: [DONE]'
+        yield '\n\n'
+        
+    mock_response = Response(status_code=200, request=mock_request)
+    mock_response.aiter_lines = mock_stream_generator
+    
+    class MockStreamContextManager:
+        async def __aenter__(self):
+            return mock_response
+        async def __aexit__(self, exc_type, exc_val, exc_tb):
+            pass
+            
+    with patch("httpx.AsyncClient.stream") as mock_stream:
+        mock_stream.return_value = MockStreamContextManager()
+        with patch("app.main.get_backend_limit", return_value=4096):
+            response = client.post("/v1/responses", json=payload)
+            
+            assert response.status_code == 200
+            assert mock_stream.call_args[1]["timeout"] == 600.0
+            
+            lines = list(response.iter_lines())
+            assert 'data: {"id": "1", "output": [{"type": "text", "text": "Hi "}]}' in lines
+            assert 'data: [DONE]' in lines
+
+def test_responses_api_streaming_error(mock_config):
+    payload = {
+        "model": "gpt-5",
+        "input": "Hello",
+        "stream": True
+    }
+    
+    mock_request = Request("POST", "http://fake-backend:8080/v1/responses")
+    
+    class MockStreamContextManagerConnError:
+        async def __aenter__(self):
+            raise RequestError(
+                message="Stream connection refused",
+                request=mock_request
+            )
+        async def __aexit__(self, exc_type, exc_val, exc_tb):
+            pass
+            
+    with patch("httpx.AsyncClient.stream") as mock_stream:
+        mock_stream.return_value = MockStreamContextManagerConnError()
+        response = client.post("/v1/responses", json=payload)
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "Connection error (RequestError): Stream connection refused" in content
 
     payload = {
         "model": "gpt-5",
