@@ -22,7 +22,7 @@ def init_db(db_path: str = _DEFAULT_DB_PATH):
     global _DB_PATH
     _DB_PATH = db_path
     
-    with sqlite3.connect(_DB_PATH) as conn:
+    with get_db_connection(_DB_PATH) as conn:
         cursor = conn.cursor()
         # API Request Logs
         cursor.execute("""
