@@ -72,3 +72,10 @@ class ResponsesResponse(BaseModel):
     model: str
     output: List[ResponseItem]
     usage: Optional[UsageInfo] = None
+
+class AnthropicMessageRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    model: str
+    messages: List[Dict[str, Any]]
+    max_tokens: Optional[int] = None
+    stream: Optional[bool] = False
