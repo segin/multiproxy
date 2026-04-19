@@ -46,6 +46,7 @@ def get_aggregate_stats(hours: int = None) -> Dict[str, Any]:
                 SUM(prompt_tokens) as total_input_tokens,
                 SUM(completion_tokens) as total_output_tokens,
                 SUM(total_tokens) as total_tokens,
+                SUM(COALESCE(prompt_cached_tokens, 0) + COALESCE(cache_read_input_tokens, 0)) as total_cached_tokens,
                 AVG(duration_ms) as avg_duration_ms,
                 AVG(tokens_per_second) as avg_tokens_per_second
             FROM logs
