@@ -9,7 +9,7 @@
     - [ ] Forward the request to the chosen backend (or fallback).
     - [ ] Handle model limit validation and fallback logic similarly to `/v1/chat/completions`.
     - [ ] Write unit tests for non-streaming requests.
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Schemas and Basic Routing' (Protocol in workflow.md) [checkpoint: ]
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Schemas and Basic Routing' (Protocol in workflow.md) [checkpoint: b472441]
 
 ## Phase 2: Streaming and Observability
 - [x] Task: Streaming Implementation
