@@ -54,3 +54,9 @@ def test_api_system_logs_html():
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
         assert "Test system log message" in response.text
+
+def test_advanced_models_view():
+    response = client.get("/advanced/models")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "Model Usage Breakdown" in response.text

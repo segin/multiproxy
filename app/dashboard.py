@@ -30,6 +30,13 @@ async def advanced_view(request: Request):
         request=request, name="advanced.html"
     )
 
+@app.get("/advanced/models", response_class=HTMLResponse)
+async def advanced_models_view(request: Request):
+    stats = get_aggregate_stats()
+    return templates.TemplateResponse(
+        request=request, name="models.html", context={"stats": stats}
+    )
+
 @app.get("/api/stats")
 async def api_stats():
     return get_aggregate_stats()

@@ -42,10 +42,16 @@ def get_aggregate_stats(hours: int = None) -> Dict[str, Any]:
         cursor.execute(f"""
             SELECT 
                 model_id,
-                COUNT(*) as count
+                COUNT(*) as count,
+                SUM(prompt_tokens) as total_input_tokens,
+                SUM(completion_tokens) as total_output_tokens,
+                SUM(total_tokens) as total_tokens,
+                AVG(duration_ms) as avg_duration_ms,
+                AVG(tokens_per_second) as avg_tokens_per_second
             FROM logs
             {where_clause}
             GROUP BY model_id
+            ORDER BY count DESC
         """, params)
         totals["model_requests"] = [dict(row) for row in cursor.fetchall()]
         
