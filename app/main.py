@@ -467,16 +467,30 @@ async def anthropic_count_tokens_api(request: AnthropicMessageRequest):
     except NoBackendsAvailableError as e:
         raise HTTPException(status_code=503, detail=str(e))
         
-    payload_dict = request.model_dump(exclude_none=True)
-    import json
-    content_to_count = json.dumps(payload_dict.get("messages", []))
-    if "system" in payload_dict:
-        content_to_count += str(payload_dict["system"])
-    if "tools" in payload_dict:
-        content_to_count += json.dumps(payload_dict["tools"])
+    target_url = f"{backend.url.rstrip('/')}/v1/messages/count_tokens"
+    payload = request.model_dump(exclude_none=True)
     
-    prompt_tokens = count_tokens(content_to_count, resolved_model)
-    return {"input_tokens": prompt_tokens}
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                target_url,
+                json=payload,
+                timeout=60.0
+            )
+            response.raise_for_status()
+            return JSONResponse(status_code=response.status_code, content=response.json())
+        except httpx.HTTPStatusError as e:
+            status_code = e.response.status_code
+            error_details = f"Backend HTTP {status_code}: {e.response.text}"
+            raise HTTPException(status_code=status_code, detail=f"Backend error: {error_details}")
+        except httpx.RequestError as e:
+            status_code = 502
+            error_details = f"Connection error ({type(e).__name__}): {str(e)}"
+            raise HTTPException(status_code=502, detail=f"Error connecting to backend: {error_details}")
+        except Exception as e:
+            status_code = 500
+            error_details = f"Internal error ({type(e).__name__}): {str(e)}"
+            raise HTTPException(status_code=500, detail=f"Internal proxy error: {error_details}")
 
 @app.post("/v1/messages")
 async def anthropic_messages_api(request: AnthropicMessageRequest, background_tasks: BackgroundTasks):
