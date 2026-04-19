@@ -456,6 +456,28 @@ async def stream_anthropic_backend_response(url: str, payload: dict, start_time:
             from app.logger import log_request
             log_request(request_model, url, status_code, duration, usage, error_details, ttft_ms, tokens_per_second)
 
+@app.post("/v1/messages/count_tokens")
+async def anthropic_count_tokens_api(request: AnthropicMessageRequest):
+    try:
+        backend = get_backend(request.model, current_config)
+        mapping = next((m for m in current_config.model_mappings if m.model_id == request.model), None)
+        resolved_model = request.model if mapping else current_config.default_model_id
+    except ModelNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except NoBackendsAvailableError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+        
+    payload_dict = request.model_dump(exclude_none=True)
+    import json
+    content_to_count = json.dumps(payload_dict.get("messages", []))
+    if "system" in payload_dict:
+        content_to_count += str(payload_dict["system"])
+    if "tools" in payload_dict:
+        content_to_count += json.dumps(payload_dict["tools"])
+    
+    prompt_tokens = count_tokens(content_to_count, resolved_model)
+    return {"input_tokens": prompt_tokens}
+
 @app.post("/v1/messages")
 async def anthropic_messages_api(request: AnthropicMessageRequest, background_tasks: BackgroundTasks):
     import time
