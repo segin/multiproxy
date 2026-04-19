@@ -26,8 +26,8 @@
                 <td style="text-align: right; padding-top: 0.5rem;">
                     <div>{{ "{:,}".format(model.total_input_tokens) }}</div>
                     <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">
-                        R: {{ "{:,}".format(model.total_input_tokens - model.total_cached_tokens) }} | 
-                        C: {{ "{:,}".format(model.total_cached_tokens) }}
+                        <div>R: {{ "{:,}".format(model.total_input_tokens - model.total_cached_tokens) }}</div>
+                        <div>C: {{ "{:,}".format(model.total_cached_tokens) }}</div>
                     </div>
                 </td>
             </tr>
