@@ -68,3 +68,17 @@ def test_get_time_series_stats():
     
     # Invalid period
     assert get_time_series_stats("invalid") == []
+
+def test_compute_burn():
+    clear_logs()
+    # 100 prompt (50 cached), 20 completion => Total 120, Burn 70 (50 uncached + 20 completion)
+    log_request("model-burn", "http://back", 200, 100.0, UsageInfo(prompt_tokens=100, completion_tokens=20, total_tokens=120, cache_read_input_tokens=50))
+    
+    stats = get_aggregate_stats()
+    assert stats["total_tokens"] == 120
+    assert stats["total_cached_tokens"] == 50
+    assert stats["total_compute_burn"] == 70
+    
+    model_stats = stats["model_requests"][0]
+    assert model_stats["model_id"] == "model-burn"
+    assert model_stats["total_compute_burn"] == 70

@@ -11,6 +11,10 @@
     <div class="card-title">Total Tokens</div>
     <div class="metric-value">{{ "{:,}".format(stats.total_tokens) }}</div>
 </div>
+<div class="card" style="border-color: var(--accent-color);">
+    <div class="card-title" style="color: var(--accent-color); font-weight: bold;">Total Compute Burn</div>
+    <div class="metric-value" style="color: var(--accent-color);">{{ "{:,}".format(stats.total_compute_burn) }}</div>
+</div>
 <div class="card">
     <div class="card-title">Token Breakdown</div>
     <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
