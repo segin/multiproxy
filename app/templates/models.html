@@ -36,6 +36,10 @@
                 <td style="text-align: right;">{{ "{:,}".format(model.total_output_tokens) }}</td>
             </tr>
             <tr>
+                <td style="color: var(--text-muted);">Avg TTFT:</td>
+                <td style="text-align: right;">{% if model.avg_ttft_ms %}{{ "%.2f"|format(model.avg_ttft_ms) }} ms{% else %}--{% endif %}</td>
+            </tr>
+            <tr>
                 <td style="color: var(--text-muted);">Avg Latency:</td>
                 <td style="text-align: right;">{% if model.avg_duration_ms %}{{ "%.2f"|format(model.avg_duration_ms) }} ms{% else %}--{% endif %}</td>
             </tr>
