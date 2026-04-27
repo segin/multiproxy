@@ -24,6 +24,7 @@
                 <span class="badge error">{{ log.status_code }}</span>
                 {% endif %}
             </td>
+            <td>{% if log.ttft_ms %}{{ "%.1f"|format(log.ttft_ms) }}ms{% else %}--{% endif %}</td>
             <td>{{ "{:,}".format(log.total_tokens) if log.total_tokens is not none else "--" }}</td>
             <td>{{ "%.2f"|format(log.duration_ms) }} ms</td>
             <td>{% if log.tokens_per_second %}{{ "%.1f"|format(log.tokens_per_second) }} t/s{% else %}--{% endif %}</td>

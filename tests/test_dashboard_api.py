@@ -13,7 +13,7 @@ def setup_test_db(tmp_path):
     clear_logs()
     
     # Insert some dummy data
-    log_request("model-api", "http://back-api", 200, 150.0, UsageInfo(prompt_tokens=10, completion_tokens=20, total_tokens=30))
+    log_request("model-api", "http://back-api", 200, 150.0, UsageInfo(prompt_tokens=10, completion_tokens=20, total_tokens=30), ttft_ms=50.0)
     
     yield
 
@@ -32,6 +32,7 @@ def test_api_logs():
     assert isinstance(data, list)
     assert len(data) == 1
     assert data[0]["model_id"] == "model-api"
+    assert data[0]["ttft_ms"] == 50.0
 
 def test_api_stats_html():
     response = client.get("/api/stats/html")
