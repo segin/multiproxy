@@ -39,7 +39,7 @@ async def stream_backend_response(url: str, payload: dict, start_time: float, re
     
     async with httpx.AsyncClient() as client:
         try:
-            async with client.stream("POST", url, json=payload, timeout=600.0) as response:
+            async with client.stream("POST", url, json=payload, timeout=1200.0) as response:
                 if response.is_error:
                     await response.aread()
                 response.raise_for_status()
@@ -154,7 +154,7 @@ async def chat_completions(request: ChatCompletionRequest, background_tasks: Bac
             response = await client.post(
                 target_url,
                 json=payload,
-                timeout=600.0
+                timeout=1200.0
             )
             response.raise_for_status()
             status_code = response.status_code
@@ -197,7 +197,7 @@ async def stream_responses_backend_response(url: str, payload: dict, start_time:
     
     async with httpx.AsyncClient() as client:
         try:
-            async with client.stream("POST", url, json=payload, timeout=600.0) as response:
+            async with client.stream("POST", url, json=payload, timeout=1200.0) as response:
                 if response.is_error:
                     await response.aread()
                 response.raise_for_status()
@@ -316,7 +316,7 @@ async def responses_api(request: ResponsesRequest, background_tasks: BackgroundT
             response = await client.post(
                 target_url,
                 json=payload,
-                timeout=600.0
+                timeout=1200.0
             )
             response.raise_for_status()
             status_code = response.status_code
@@ -360,7 +360,7 @@ async def stream_anthropic_backend_response(url: str, payload: dict, start_time:
     
     async with httpx.AsyncClient() as client:
         try:
-            async with client.stream("POST", url, json=payload, timeout=600.0, headers={"anthropic-version": "2023-06-01", "x-api-key": "sk-dummy"}) as response:
+            async with client.stream("POST", url, json=payload, timeout=1200.0, headers={"anthropic-version": "2023-06-01", "x-api-key": "sk-dummy"}) as response:
                 if response.is_error:
                     await response.aread()
                 response.raise_for_status()
@@ -475,7 +475,7 @@ async def anthropic_count_tokens_api(request: AnthropicMessageRequest):
             response = await client.post(
                 target_url,
                 json=payload,
-                timeout=60.0
+                timeout=1200.0
             )
             response.raise_for_status()
             return JSONResponse(status_code=response.status_code, content=response.json())
@@ -539,7 +539,7 @@ async def anthropic_messages_api(request: AnthropicMessageRequest, background_ta
             response = await client.post(
                 target_url,
                 json=payload,
-                timeout=600.0,
+                timeout=1200.0,
                 headers={"anthropic-version": "2023-06-01", "x-api-key": "sk-dummy"}
             )
             response.raise_for_status()
