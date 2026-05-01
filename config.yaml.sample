@@ -1,0 +1,23 @@
+backends:
+  - id: primary-llm
+    url: http://llm-host-1.example.local:8080
+  - id: small-llm
+    url: http://llm-host-1.example.local:8082
+  - id: embedding-node
+    url: http://10.0.0.10:8083
+
+model_mappings:
+  - model_id: large-chat-model
+    backend_ids:
+      - primary-llm
+  - model_id: medium-chat-model
+    backend_ids:
+      - primary-llm
+  - model_id: small-chat-model
+    backend_ids:
+      - small-llm
+  - model_id: text-embedding-model
+    backend_ids:
+      - embedding-node
+
+default_model_id: large-chat-model
