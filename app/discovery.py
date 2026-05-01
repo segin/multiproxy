@@ -8,26 +8,32 @@ logger = logging.getLogger(__name__)
 
 async def discover_backend_limits(config: Config):
     """
-    Query the /props endpoint of each configured backend to discover token limits.
-    For llama.cpp server, /props returns JSON containing default_generation_settings.n_ctx.
+    Populate the per-backend token limit table.
+
+    A backend with `context_size` set in config.yaml uses that value verbatim
+    (manual override). Otherwise we query the backend's /props endpoint —
+    llama.cpp returns default_generation_settings.n_ctx there.
     """
     global _backend_limits
     _backend_limits.clear()
-    
+
     async with httpx.AsyncClient() as client:
         for backend in config.backends:
+            if backend.context_size is not None:
+                _backend_limits[backend.id] = backend.context_size
+                continue
+
             # If backend URL has /v1, strip it to get to /props at the root
             base_url = backend.url.rstrip("/")
             if base_url.endswith("/v1"):
                 base_url = base_url[:-3]
-            
+
             props_url = f"{base_url}/props"
             try:
                 response = await client.get(props_url, timeout=10.0)
                 response.raise_for_status()
                 data = response.json()
-                
-                # Try to extract n_ctx
+
                 if "default_generation_settings" in data and "n_ctx" in data["default_generation_settings"]:
                     _backend_limits[backend.id] = data["default_generation_settings"]["n_ctx"]
                 else:

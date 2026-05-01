@@ -5,6 +5,9 @@ backends:
     url: http://llm-host-1.example.local:8082
   - id: embedding-node
     url: http://10.0.0.10:8083
+    # Optional: manually override the context window size (in tokens). When set,
+    # discovery skips this backend's /props endpoint and uses this value instead.
+    context_size: 16384
 
 model_mappings:
   - model_id: large-chat-model
@@ -21,3 +24,4 @@ model_mappings:
       - embedding-node
 
 default_model_id: large-chat-model
+default_embedding_model_id: text-embedding-model

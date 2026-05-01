@@ -6,6 +6,7 @@ from pydantic import BaseModel, HttpUrl
 class Backend(BaseModel):
     id: str
     url: str
+    context_size: int | None = None
 
 class ModelMapping(BaseModel):
     model_id: str
@@ -15,6 +16,7 @@ class Config(BaseModel):
     backends: List[Backend]
     model_mappings: List[ModelMapping]
     default_model_id: str | None = None
+    default_embedding_model_id: str | None = None
 
 def load_config(file_path: str | Path) -> Config:
     path = Path(file_path)

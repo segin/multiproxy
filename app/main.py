@@ -585,9 +585,13 @@ async def anthropic_messages_api(request: AnthropicMessageRequest, background_ta
 async def embeddings(request: EmbeddingRequest, background_tasks: BackgroundTasks):
     start_time = time.time()
     try:
-        backend = get_backend(request.model, current_config)
+        backend = get_backend(
+            request.model,
+            current_config,
+            default_model_override=current_config.default_embedding_model_id,
+        )
         mapping = next((m for m in current_config.model_mappings if m.model_id == request.model), None)
-        resolved_model = request.model if mapping else current_config.default_model_id
+        resolved_model = request.model if mapping else current_config.default_embedding_model_id
     except ModelNotFoundError as e:
         background_tasks.add_task(log_request, request.model, "N/A", 404, (time.time() - start_time) * 1000, None, str(e))
         raise HTTPException(status_code=404, detail=str(e))
