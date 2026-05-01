@@ -79,3 +79,11 @@ class AnthropicMessageRequest(BaseModel):
     messages: List[Dict[str, Any]]
     max_tokens: Optional[int] = None
     stream: Optional[bool] = False
+
+class EmbeddingRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    model: str
+    input: Union[str, List[str], List[int], List[List[int]]]
+    encoding_format: Optional[str] = None
+    dimensions: Optional[int] = None
+    user: Optional[str] = None

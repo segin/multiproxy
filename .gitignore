@@ -7,3 +7,4 @@ venv/
 logs.db
 test_*.py
 !tests/test_*.py
+config.yaml
