@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from app.schemas import ChatCompletionRequest, UsageInfo, ResponsesRequest, AnthropicMessageRequest, EmbeddingRequest
 from app.config import Config
@@ -654,6 +654,74 @@ async def embeddings(request: EmbeddingRequest, background_tasks: BackgroundTask
             if not usage:
                 usage = UsageInfo(prompt_tokens=prompt_tokens, completion_tokens=0, total_tokens=prompt_tokens)
             background_tasks.add_task(log_request, resolved_model, target_url, status_code, duration, usage, error_details)
+
+async def _ollama_embed_passthrough(request: Request, background_tasks: BackgroundTasks, path: str):
+    start_time = time.time()
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+
+    model = body.get("model")
+    if not model:
+        raise HTTPException(status_code=400, detail="'model' field is required")
+
+    try:
+        backend = get_backend(
+            model,
+            current_config,
+            default_model_override=current_config.default_embedding_model_id,
+        )
+        mapping = next((m for m in current_config.model_mappings if m.model_id == model), None)
+        resolved_model = model if mapping else current_config.default_embedding_model_id
+    except ModelNotFoundError as e:
+        background_tasks.add_task(log_request, model, "N/A", 404, (time.time() - start_time) * 1000, None, str(e))
+        raise HTTPException(status_code=404, detail=str(e))
+    except NoBackendsAvailableError as e:
+        background_tasks.add_task(log_request, model, "N/A", 503, (time.time() - start_time) * 1000, None, str(e))
+        raise HTTPException(status_code=503, detail=str(e))
+
+    target_url = f"{backend.url.rstrip('/')}{path}"
+
+    status_code = 200
+    usage = None
+    error_details = None
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(target_url, json=body, timeout=1200.0)
+            response.raise_for_status()
+            status_code = response.status_code
+            data = response.json()
+            prompt_tokens = data.get("prompt_eval_count", 0) or 0
+            usage = UsageInfo(prompt_tokens=prompt_tokens, completion_tokens=0, total_tokens=prompt_tokens)
+            return JSONResponse(status_code=status_code, content=data)
+        except httpx.HTTPStatusError as e:
+            status_code = e.response.status_code
+            error_details = f"Backend HTTP {status_code}: {e.response.text}"
+            raise HTTPException(status_code=status_code, detail=f"Backend error: {error_details}")
+        except httpx.RequestError as e:
+            status_code = 502
+            error_details = f"Connection error ({type(e).__name__}): {str(e)}"
+            raise HTTPException(status_code=502, detail=f"Error connecting to backend: {error_details}")
+        except Exception as e:
+            status_code = 500
+            error_details = f"Internal error ({type(e).__name__}): {str(e)}"
+            raise HTTPException(status_code=500, detail=f"Internal proxy error: {error_details}")
+        finally:
+            duration = (time.time() - start_time) * 1000
+            background_tasks.add_task(log_request, resolved_model, target_url, status_code, duration, usage, error_details)
+
+
+@app.post("/api/embed")
+async def ollama_embed(request: Request, background_tasks: BackgroundTasks):
+    return await _ollama_embed_passthrough(request, background_tasks, "/api/embed")
+
+
+@app.post("/api/embeddings")
+async def ollama_embeddings(request: Request, background_tasks: BackgroundTasks):
+    return await _ollama_embed_passthrough(request, background_tasks, "/api/embeddings")
+
 
 @app.get("/v1/models")
 
