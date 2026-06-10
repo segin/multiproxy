@@ -7,13 +7,32 @@ from app.tokens import count_tokens
 import httpx
 import time
 import json
-from app.logger import log_request, init_db, setup_logging
+from app.logger import log_request, init_db, setup_logging, set_untracked_models
 from app.config import load_config
 from app.discovery import discover_backend_limits, get_backend_limit
 from contextlib import asynccontextmanager
 
 # This will be initialized properly later; for tests we can patch it
 current_config = Config(backends=[], model_mappings=[])
+
+
+def backend_auth_headers(backend, anthropic: bool = False) -> dict:
+    """Build outbound auth headers for a backend.
+
+    Why: backends may be hosted services (OpenAI, Anthropic, OpenRouter, etc.)
+    that require an API key. When `backend.api_key` is unset, preserve the
+    pre-existing behavior — no Authorization for OpenAI-style endpoints, and
+    the historical `sk-dummy` placeholder for Anthropic-style endpoints (which
+    llama.cpp tolerates).
+    """
+    if anthropic:
+        return {
+            "anthropic-version": "2023-06-01",
+            "x-api-key": backend.api_key or "sk-dummy",
+        }
+    if backend.api_key:
+        return {"Authorization": f"Bearer {backend.api_key}"}
+    return {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,22 +43,23 @@ async def lifespan(app: FastAPI):
         current_config = load_config("config.yaml")
     except FileNotFoundError:
         print("Warning: config.yaml not found. Using empty configuration.")
+    set_untracked_models(current_config.untracked_models)
     await discover_backend_limits(current_config)
     yield
 
 app = FastAPI(title="MultiProxy", lifespan=lifespan)
 
-async def stream_backend_response(url: str, payload: dict, start_time: float, request_model: str, prompt_tokens: int):
+async def stream_backend_response(url: str, payload: dict, start_time: float, request_model: str, prompt_tokens: int, headers: dict | None = None):
     completion_tokens = 0
     status_code = 200
     error_details = None
     accumulated_content = ""
     usage_obj = None
     ttft_ms = None
-    
+
     async with httpx.AsyncClient() as client:
         try:
-            async with client.stream("POST", url, json=payload, timeout=1200.0) as response:
+            async with client.stream("POST", url, json=payload, timeout=None, headers=headers or {}) as response:
                 if response.is_error:
                     await response.aread()
                 response.raise_for_status()
@@ -133,28 +153,30 @@ async def chat_completions(request: ChatCompletionRequest, background_tasks: Bac
 
     target_url = f"{backend.url.rstrip('/')}/v1/chat/completions"
     payload = request.model_dump(exclude_none=True)
-    
+    auth_headers = backend_auth_headers(backend)
+
     if request.stream:
         # Force the backend to include token usage in the stream so we get accurate metrics
         if "stream_options" not in payload:
             payload["stream_options"] = {"include_usage": True}
         elif isinstance(payload["stream_options"], dict):
             payload["stream_options"]["include_usage"] = True
-            
-        return StreamingResponse(stream_backend_response(target_url, payload, start_time, resolved_model, prompt_tokens), media_type="text/event-stream")
-    
+
+        return StreamingResponse(stream_backend_response(target_url, payload, start_time, resolved_model, prompt_tokens, auth_headers), media_type="text/event-stream")
+
     status_code = 200
     usage = None
     error_details = None
     ttft_ms = None
     tokens_per_second = None
-    
+
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(
                 target_url,
                 json=payload,
-                timeout=1200.0
+                timeout=None,
+                headers=auth_headers,
             )
             response.raise_for_status()
             status_code = response.status_code
@@ -163,11 +185,11 @@ async def chat_completions(request: ChatCompletionRequest, background_tasks: Bac
                 usage = UsageInfo(**data["usage"])
             else:
                 usage = UsageInfo(prompt_tokens=prompt_tokens, completion_tokens=0, total_tokens=prompt_tokens)
-            
+
             if "timings" in data:
                 ttft_ms = data.get("timings", {}).get("prompt_ms")
                 tokens_per_second = data.get("timings", {}).get("predicted_per_second")
-                
+
             return JSONResponse(status_code=status_code, content=data)
         except httpx.HTTPStatusError as e:
             status_code = e.response.status_code
@@ -187,7 +209,7 @@ async def chat_completions(request: ChatCompletionRequest, background_tasks: Bac
                 usage = UsageInfo(prompt_tokens=prompt_tokens, completion_tokens=0, total_tokens=prompt_tokens)
             background_tasks.add_task(log_request, resolved_model, target_url, status_code, duration, usage, error_details, ttft_ms, tokens_per_second)
 
-async def stream_responses_backend_response(url: str, payload: dict, start_time: float, request_model: str, prompt_tokens: int):
+async def stream_responses_backend_response(url: str, payload: dict, start_time: float, request_model: str, prompt_tokens: int, headers: dict | None = None):
     completion_tokens = 0
     status_code = 200
     error_details = None
@@ -197,7 +219,7 @@ async def stream_responses_backend_response(url: str, payload: dict, start_time:
     
     async with httpx.AsyncClient() as client:
         try:
-            async with client.stream("POST", url, json=payload, timeout=1200.0) as response:
+            async with client.stream("POST", url, json=payload, timeout=None, headers=headers or {}) as response:
                 if response.is_error:
                     await response.aread()
                 response.raise_for_status()
@@ -296,27 +318,29 @@ async def responses_api(request: ResponsesRequest, background_tasks: BackgroundT
 
     target_url = f"{backend.url.rstrip("/")}/v1/responses"
     payload = request.model_dump(exclude_none=True)
-    
+    auth_headers = backend_auth_headers(backend)
+
     if request.stream:
         if "stream_options" not in payload:
             payload["stream_options"] = {"include_usage": True}
         elif isinstance(payload["stream_options"], dict):
             payload["stream_options"]["include_usage"] = True
-            
-        return StreamingResponse(stream_responses_backend_response(target_url, payload, start_time, resolved_model, prompt_tokens), media_type="text/event-stream")
-    
+
+        return StreamingResponse(stream_responses_backend_response(target_url, payload, start_time, resolved_model, prompt_tokens, auth_headers), media_type="text/event-stream")
+
     status_code = 200
     usage = None
     error_details = None
     ttft_ms = None
     tokens_per_second = None
-    
+
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(
                 target_url,
                 json=payload,
-                timeout=1200.0
+                timeout=None,
+                headers=auth_headers,
             )
             response.raise_for_status()
             status_code = response.status_code
@@ -325,11 +349,11 @@ async def responses_api(request: ResponsesRequest, background_tasks: BackgroundT
                 usage = UsageInfo(**data["usage"])
             else:
                 usage = UsageInfo(prompt_tokens=prompt_tokens, completion_tokens=0, total_tokens=prompt_tokens)
-            
+
             if "timings" in data:
                 ttft_ms = data.get("timings", {}).get("prompt_ms")
                 tokens_per_second = data.get("timings", {}).get("predicted_per_second")
-                
+
             return JSONResponse(status_code=status_code, content=data)
         except httpx.HTTPStatusError as e:
             status_code = e.response.status_code
@@ -350,7 +374,7 @@ async def responses_api(request: ResponsesRequest, background_tasks: BackgroundT
             background_tasks.add_task(log_request, resolved_model, target_url, status_code, duration, usage, error_details, ttft_ms, tokens_per_second)
 
 
-async def stream_anthropic_backend_response(url: str, payload: dict, start_time: float, request_model: str, prompt_tokens: int):
+async def stream_anthropic_backend_response(url: str, payload: dict, start_time: float, request_model: str, prompt_tokens: int, headers: dict | None = None):
     completion_tokens = 0
     status_code = 200
     error_details = None
@@ -360,7 +384,7 @@ async def stream_anthropic_backend_response(url: str, payload: dict, start_time:
     
     async with httpx.AsyncClient() as client:
         try:
-            async with client.stream("POST", url, json=payload, timeout=1200.0, headers={"anthropic-version": "2023-06-01", "x-api-key": "sk-dummy"}) as response:
+            async with client.stream("POST", url, json=payload, timeout=None, headers=headers or {"anthropic-version": "2023-06-01", "x-api-key": "sk-dummy"}) as response:
                 if response.is_error:
                     await response.aread()
                 response.raise_for_status()
@@ -469,13 +493,14 @@ async def anthropic_count_tokens_api(request: AnthropicMessageRequest):
         
     target_url = f"{backend.url.rstrip('/')}/v1/messages/count_tokens"
     payload = request.model_dump(exclude_none=True)
-    
+
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(
                 target_url,
                 json=payload,
-                timeout=1200.0
+                timeout=None,
+                headers=backend_auth_headers(backend, anthropic=True),
             )
             response.raise_for_status()
             return JSONResponse(status_code=response.status_code, content=response.json())
@@ -524,23 +549,24 @@ async def anthropic_messages_api(request: AnthropicMessageRequest, background_ta
 
     target_url = f"{backend.url.rstrip('/')}/v1/messages"
     payload = request.model_dump(exclude_none=True)
-    
+    auth_headers = backend_auth_headers(backend, anthropic=True)
+
     if request.stream:
-        return StreamingResponse(stream_anthropic_backend_response(target_url, payload, start_time, resolved_model, prompt_tokens), media_type="text/event-stream")
-    
+        return StreamingResponse(stream_anthropic_backend_response(target_url, payload, start_time, resolved_model, prompt_tokens, auth_headers), media_type="text/event-stream")
+
     status_code = 200
     usage = None
     error_details = None
     ttft_ms = None
     tokens_per_second = None
-    
+
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(
                 target_url,
                 json=payload,
-                timeout=1200.0,
-                headers={"anthropic-version": "2023-06-01", "x-api-key": "sk-dummy"}
+                timeout=None,
+                headers=auth_headers,
             )
             response.raise_for_status()
             status_code = response.status_code
@@ -623,7 +649,7 @@ async def embeddings(request: EmbeddingRequest, background_tasks: BackgroundTask
 
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.post(target_url, json=payload, timeout=1200.0)
+            response = await client.post(target_url, json=payload, timeout=None, headers=backend_auth_headers(backend))
             response.raise_for_status()
             status_code = response.status_code
             data = response.json()
@@ -689,7 +715,7 @@ async def _ollama_embed_passthrough(request: Request, background_tasks: Backgrou
 
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.post(target_url, json=body, timeout=1200.0)
+            response = await client.post(target_url, json=body, timeout=None, headers=backend_auth_headers(backend))
             response.raise_for_status()
             status_code = response.status_code
             data = response.json()
@@ -724,21 +750,20 @@ async def ollama_embeddings(request: Request, background_tasks: BackgroundTasks)
 
 
 @app.get("/v1/models")
-
 async def list_models():
     models = []
     seen_models = set()
     for mapping in current_config.model_mappings:
         if mapping.model_id not in seen_models:
             seen_models.add(mapping.model_id)
-            
+
             limit = None
             for backend_id in mapping.backend_ids:
                 l = get_backend_limit(backend_id)
                 if l is not None:
                     limit = l
                     break
-                    
+
             models.append({
                 "id": mapping.model_id,
                 "object": "model",
@@ -746,5 +771,50 @@ async def list_models():
                 "owned_by": "multiproxy",
                 "context_length": limit or 4096
             })
-            
+
     return {"object": "list", "data": models}
+
+
+@app.get("/v1/models/browser")
+async def models_browser():
+    backends_by_id = {b.id: b for b in current_config.backends}
+    default_chat = current_config.default_model_id
+    default_embed = current_config.default_embedding_model_id
+
+    data = []
+    seen = set()
+    for mapping in current_config.model_mappings:
+        if mapping.model_id in seen:
+            continue
+        seen.add(mapping.model_id)
+
+        backend_entries = []
+        max_limit = None
+        for backend_id in mapping.backend_ids:
+            backend = backends_by_id.get(backend_id)
+            limit = get_backend_limit(backend_id)
+            if limit is not None and (max_limit is None or limit > max_limit):
+                max_limit = limit
+            backend_entries.append({
+                "id": backend_id,
+                "url": backend.url if backend else None,
+                "configured": backend is not None,
+                "context_length": limit,
+            })
+
+        data.append({
+            "id": mapping.model_id,
+            "object": "model",
+            "owned_by": "multiproxy",
+            "context_length": max_limit,
+            "is_default": mapping.model_id == default_chat,
+            "is_default_embedding": mapping.model_id == default_embed,
+            "backends": backend_entries,
+        })
+
+    return {
+        "object": "list",
+        "default_model_id": default_chat,
+        "default_embedding_model_id": default_embed,
+        "data": data,
+    }

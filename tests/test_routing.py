@@ -48,7 +48,7 @@ def test_proxy_forwards_request(mock_config):
         
         assert response.status_code == 200
         # Verify the 300s timeout was used
-        assert mock_post.call_args[1]["timeout"] == 600.0
+        assert mock_post.call_args[1]["timeout"] is None
         data = response.json()
         assert data["choices"][0]["message"]["content"] == "Pong"
         
@@ -138,7 +138,7 @@ def test_proxy_forwards_streaming_request(mock_config):
         
         assert response.status_code == 200
         # Verify timeout
-        assert mock_stream.call_args[1]["timeout"] == 600.0
+        assert mock_stream.call_args[1]["timeout"] is None
         # When streaming, the TestClient response has iter_lines()
         lines = list(response.iter_lines())
         

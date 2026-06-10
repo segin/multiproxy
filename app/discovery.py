@@ -30,7 +30,7 @@ async def discover_backend_limits(config: Config):
 
             props_url = f"{base_url}/props"
             try:
-                response = await client.get(props_url, timeout=10.0)
+                response = await client.get(props_url, timeout=None)
                 response.raise_for_status()
                 data = response.json()
 

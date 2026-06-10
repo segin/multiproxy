@@ -119,7 +119,7 @@ def test_responses_api_streaming(mock_config):
             response = client.post("/v1/responses", json=payload)
             
             assert response.status_code == 200
-            assert mock_stream.call_args[1]["timeout"] == 600.0
+            assert mock_stream.call_args[1]["timeout"] is None
             
             lines = list(response.iter_lines())
             assert 'data: {"id": "1", "output": [{"type": "text", "text": "Hi "}]}' in lines
