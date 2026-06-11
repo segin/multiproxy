@@ -8,6 +8,19 @@ backends:
     # Optional: manually override the context window size (in tokens). When set,
     # discovery skips this backend's /props endpoint and uses this value instead.
     context_size: 16384
+  - id: hosted-openai
+    url: https://api.openai.com
+    # Optional: per-backend API key. When set, MultiProxy forwards it as
+    # `Authorization: Bearer <key>` for OpenAI-style endpoints
+    # (chat/completions, responses, embeddings, /api/embed) and as
+    # `x-api-key: <key>` for Anthropic-style endpoints (/v1/messages,
+    # /v1/messages/count_tokens). When omitted, no Authorization header is
+    # sent for OpenAI-style requests, and Anthropic-style requests fall back
+    # to the historical `sk-dummy` placeholder accepted by llama.cpp.
+    api_key: sk-your-openai-key-here
+  - id: hosted-anthropic
+    url: https://api.anthropic.com
+    api_key: sk-ant-your-anthropic-key-here
 
 model_mappings:
   - model_id: large-chat-model
@@ -25,3 +38,12 @@ model_mappings:
 
 default_model_id: large-chat-model
 default_embedding_model_id: text-embedding-model
+
+# Optional: model IDs whose requests should bypass usage accounting. Requests
+# are proxied normally, but no row is written to logs.db — so they won't show
+# up in dashboard stats, time-series charts, or the recent-logs view. Useful
+# when a hosted/paid model is proxied alongside local backends and you only
+# want resource metrics for local inference. Defaults to no exclusions.
+untracked_models:
+  - gpt-4-turbo
+  - claude-3-opus-20240229

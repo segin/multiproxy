@@ -7,6 +7,7 @@ class Backend(BaseModel):
     id: str
     url: str
     context_size: int | None = None
+    api_key: str | None = None
 
 class ModelMapping(BaseModel):
     model_id: str
@@ -17,6 +18,7 @@ class Config(BaseModel):
     model_mappings: List[ModelMapping]
     default_model_id: str | None = None
     default_embedding_model_id: str | None = None
+    untracked_models: List[str] = []
 
 def load_config(file_path: str | Path) -> Config:
     path = Path(file_path)

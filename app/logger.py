@@ -8,6 +8,15 @@ from contextlib import contextmanager
 
 _DEFAULT_DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs.db")
 _DB_PATH = _DEFAULT_DB_PATH
+_UNTRACKED_MODELS: set[str] = set()
+
+
+def set_untracked_models(model_ids):
+    """Replace the untracked-models set. Requests for these model IDs will be
+    proxied normally but skipped by `log_request`, so they won't contribute
+    to dashboard stats, time series, or the recent-logs view."""
+    global _UNTRACKED_MODELS
+    _UNTRACKED_MODELS = set(model_ids or [])
 
 @contextmanager
 def get_db_connection(db_path: str):
@@ -107,6 +116,9 @@ def log_request(
     ttft_ms: Optional[float] = None,
     tokens_per_second: Optional[float] = None
 ):
+    if model_id in _UNTRACKED_MODELS:
+        return
+
     prompt_cached = usage.prompt_tokens_details.get("cached_tokens") if usage and usage.prompt_tokens_details else None
     cache_creation = usage.cache_creation_input_tokens if usage else None
     cache_read = usage.cache_read_input_tokens if usage else None
