@@ -6,13 +6,13 @@
 - Check coverage: `PYTHONPATH=. source venv/bin/activate && pytest --cov=app --cov-report=term-missing`
 
 ## Code style
-- Python 3.10+, FastAPI, SQLite, HTMX, Jinja2, Chart.js.
+- Python 3.12+, FastAPI, SQLite, HTMX, Jinja2, Chart.js.
 - Strict Schema Passthrough: Must use Pydantic `ConfigDict(extra="allow")` to prevent stripping unknown JSON fields (crucial for tools, tool_choice, tool_calls).
 - Database: ALWAYS use the custom `get_db_connection` context manager with `finally: conn.close()` to prevent SQLite file descriptor exhaustion.
 - Streaming Error Handling: Raising HTTPExceptions during FastAPI `StreamingResponse` causes ASGI crashes; errors must be yielded as Server-Sent Event (SSE) data chunks.
 - Token Metrics: The proxy forcefully injects `stream_options.include_usage = True` to guarantee exact ground-truth token counts from the backend.
 - Analytics: Calculate `tokens_per_second` strictly excluding Time-To-First-Token (TTFT). Calculate `total_compute_burn` as `total_tokens - cached_tokens` to reflect actual hardware workload.
-- Timeouts: Explicitly set `timeout=None` on all backend `httpx.AsyncClient` requests to prevent premature disconnects during long prefill operations.
+- Timeouts: Explicitly set `timeout=None` on all backend `httpx.AsyncClient` *inference* requests to prevent premature disconnects during long prefill operations. Startup discovery (`/props`) uses a finite timeout so an unresponsive backend can't block the proxy from starting.
 
 ## Testing instructions
 - TDD with >95% test coverage required.

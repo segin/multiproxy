@@ -18,7 +18,7 @@ MultiProxy uses a simple `config.yaml` file to manage backend routing. For full 
 
 ## Getting Started
 
-1. Ensure you have Python 3.14+ installed.
+1. Ensure you have Python 3.12+ installed.
 2. Activate your virtual environment and install requirements (if any).
 3. Create your `config.yaml` based on the configuration guide.
 4. Start the proxy and dashboard using the provided script:
