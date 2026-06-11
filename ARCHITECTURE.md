@@ -53,7 +53,7 @@ Deployment: Native Python execution (port 8080)
 ### 4.1. SQLite Database
 Name: logs.db
 Type: SQLite
-Purpose: Stores all API request logs (metadata, token usage, latency) and internal system logs.
+Purpose: Stores all API request logs (metadata, token usage, caching details, TTFT, latency, tokens per second) and internal system logs.
 Key Schemas/Collections: logs, system_logs
 
 ## 5. External Integrations / APIs

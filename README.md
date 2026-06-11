@@ -6,7 +6,7 @@ A high-performance, resilient multi-backend proxy and HTMX dashboard for local L
 
 - **Multi-Protocol Support**: Fully supports OpenAI's `/v1/chat/completions` and `/v1/responses` endpoints, as well as Anthropic's `/v1/messages` and `/v1/messages/count_tokens` endpoints.
 - **Direct Backend Routing**: Forwards requests directly to the native endpoints of your configured backend servers.
-- **Token Analytics & Dashboard**: Includes an interactive, HTMX-powered web dashboard that tracks real-time activity, tokens per second, time-to-first-token (TTFT), and aggregate usage metrics across all models and timeframes.
+- **Token Analytics & Dashboard**: Includes an interactive, HTMX-powered web dashboard that tracks real-time activity, tokens per second, time-to-first-token (TTFT), **Total Compute Burn** (isolating actual hardware workload from cached prefixes), and aggregate usage metrics across all models and timeframes.
 - **Configurable Model Mapping**: Map requested model IDs (like `gpt-4-turbo` or `claude-3-opus`) to specific backend servers for load balancing and granular control.
 - **Default Model Fallback**: Automatically reroute requests for unknown or unmapped models to a designated default backend.
 - **Context Limit Discovery**: Automatically queries backend servers on startup to discover context limits and proactively rejects requests that exceed the available context window.

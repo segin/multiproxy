@@ -11,7 +11,8 @@
 - Database: ALWAYS use the custom `get_db_connection` context manager with `finally: conn.close()` to prevent SQLite file descriptor exhaustion.
 - Streaming Error Handling: Raising HTTPExceptions during FastAPI `StreamingResponse` causes ASGI crashes; errors must be yielded as Server-Sent Event (SSE) data chunks.
 - Token Metrics: The proxy forcefully injects `stream_options.include_usage = True` to guarantee exact ground-truth token counts from the backend.
-- Analytics: Calculate `tokens_per_second` strictly excluding Time-To-First-Token (TTFT).
+- Analytics: Calculate `tokens_per_second` strictly excluding Time-To-First-Token (TTFT). Calculate `total_compute_burn` as `total_tokens - cached_tokens` to reflect actual hardware workload.
+- Timeouts: Explicitly set `timeout=None` on all backend `httpx.AsyncClient` requests to prevent premature disconnects during long prefill operations.
 
 ## Testing instructions
 - TDD with >95% test coverage required.
