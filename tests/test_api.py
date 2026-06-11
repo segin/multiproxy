@@ -39,9 +39,10 @@ def test_chat_completions_endpoint_exists(mock_config):
     
     with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
         mock_post.return_value = mock_response
-        with TestClient(app) as client:
-            response = client.post("/v1/chat/completions", json=payload)
-        
+        # No lifespan here: triggering it would load the real config.yaml and
+        # run live backend discovery. Lifespan is covered in test_lifespan.py.
+        response = client.post("/v1/chat/completions", json=payload)
+
         assert response.status_code in [200, 501], f"Expected 200 or 501, got {response.status_code}"
         
         if response.status_code == 200:

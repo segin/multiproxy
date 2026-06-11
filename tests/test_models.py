@@ -31,6 +31,23 @@ def test_list_models_endpoint(mock_config):
     assert "context_length" in model
 
 
+def test_list_models_reports_max_backend_limit(monkeypatch):
+    config = Config(
+        backends=[
+            Backend(id="b1", url="http://b1:8080"),
+            Backend(id="b2", url="http://b2:8080"),
+        ],
+        model_mappings=[ModelMapping(model_id="chat-model", backend_ids=["b1", "b2"])],
+    )
+    monkeypatch.setattr("app.main.current_config", config, raising=False)
+    monkeypatch.setattr("app.discovery._backend_limits", {"b1": 8192, "b2": 16384}, raising=False)
+
+    response = client.get("/v1/models")
+    assert response.status_code == 200
+    # Consistent with /v1/models/browser: max across all mapped backends
+    assert response.json()["data"][0]["context_length"] == 16384
+
+
 @pytest.fixture
 def browser_config(monkeypatch):
     config = Config(

@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import List
 import yaml
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
 
 class Backend(BaseModel):
     id: str

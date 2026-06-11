@@ -35,6 +35,31 @@ async def test_discover_backend_limits(mock_config):
         assert get_backend_limit("b2") == 8192
 
 @pytest.mark.asyncio
+async def test_discovery_uses_finite_timeout(mock_config):
+    """Startup discovery must not hang forever on an unresponsive backend."""
+    from app.discovery import DISCOVERY_TIMEOUT_SECONDS
+    mock_req = Request("GET", "http://fake-backend:8080/props")
+    mock_response = Response(status_code=200, json={"default_generation_settings": {"n_ctx": 4096}}, request=mock_req)
+
+    with patch("httpx.AsyncClient.get", new_callable=AsyncMock) as mock_get_patch:
+        mock_get_patch.return_value = mock_response
+        await discover_backend_limits(mock_config)
+        assert mock_get_patch.call_args.kwargs["timeout"] == DISCOVERY_TIMEOUT_SECONDS
+
+
+@pytest.mark.asyncio
+async def test_discovery_uses_manual_context_size_override():
+    config = Config(
+        backends=[Backend(id="manual", url="http://fake-backend:8080", context_size=2048)],
+        model_mappings=[]
+    )
+    with patch("httpx.AsyncClient.get", new_callable=AsyncMock) as mock_get_patch:
+        await discover_backend_limits(config)
+        mock_get_patch.assert_not_called()
+        assert get_backend_limit("manual") == 2048
+
+
+@pytest.mark.asyncio
 async def test_discover_backend_limits_error_handling(mock_config):
     # Test fallback if the backend is down or doesn't have /props
     mock_req = Request("GET", "http://fake-backend:8080/props")

@@ -2,13 +2,14 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from app.stats import get_aggregate_stats, get_recent_logs, get_time_series_stats
-from app.logger import setup_logging, get_system_logs
+from app.logger import setup_logging, get_system_logs, init_db
 from contextlib import asynccontextmanager
 import datetime
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_logging()
+    init_db()
     yield
 
 app = FastAPI(title="MultiProxy Dashboard", lifespan=lifespan)

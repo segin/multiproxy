@@ -6,6 +6,11 @@ from app.config import Config
 _backend_limits: Dict[str, int] = {}
 logger = logging.getLogger(__name__)
 
+# Discovery is a small GET at startup, not an inference request: a finite
+# timeout keeps one unresponsive backend from blocking the proxy from ever
+# starting. The no-timeout rule applies only to inference forwarding.
+DISCOVERY_TIMEOUT_SECONDS = 10.0
+
 async def discover_backend_limits(config: Config):
     """
     Populate the per-backend token limit table.
@@ -30,7 +35,7 @@ async def discover_backend_limits(config: Config):
 
             props_url = f"{base_url}/props"
             try:
-                response = await client.get(props_url, timeout=None)
+                response = await client.get(props_url, timeout=DISCOVERY_TIMEOUT_SECONDS)
                 response.raise_for_status()
                 data = response.json()
 

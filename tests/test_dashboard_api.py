@@ -56,6 +56,24 @@ def test_api_system_logs_html():
         assert "text/html" in response.headers["content-type"]
         assert "Test system log message" in response.text
 
+def test_advanced_view():
+    response = client.get("/advanced")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+
+def test_api_time_series():
+    response = client.get("/api/stats/time-series/hour")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) == 1  # the dummy log inserted by the fixture
+
+@pytest.mark.parametrize("period", ["hour", "day", "month"])
+def test_api_stats_html_periods(period):
+    response = client.get(f"/api/stats/html?period={period}")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+
 def test_advanced_models_view():
     response = client.get("/advanced/models")
     assert response.status_code == 200

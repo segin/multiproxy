@@ -27,10 +27,16 @@ def get_db_connection(db_path: str):
     finally:
         conn.close()
 
-def init_db(db_path: str = _DEFAULT_DB_PATH):
+def init_db(db_path: Optional[str] = None):
+    """Create tables at `db_path` (or the currently active path when omitted).
+
+    Passing None must not reset the path: tests point _DB_PATH at a temp file,
+    and the lifespan's no-arg init_db() should initialize that same file.
+    """
     global _DB_PATH
-    _DB_PATH = db_path
-    
+    if db_path is not None:
+        _DB_PATH = db_path
+
     with get_db_connection(_DB_PATH) as conn:
         cursor = conn.cursor()
         # API Request Logs
@@ -150,8 +156,6 @@ def log_request(
         ))
 
 def get_logs() -> List[Dict[str, Any]]:
-    # Initialize DB if it hasn't been created yet (mainly for safety)
-    init_db(_DB_PATH)
     with get_db_connection(_DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
@@ -170,6 +174,3 @@ def clear_logs():
         cursor = conn.cursor()
         cursor.execute("DELETE FROM logs")
         cursor.execute("DELETE FROM system_logs")
-
-# Auto-initialize with default path
-init_db()

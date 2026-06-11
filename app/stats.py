@@ -1,9 +1,9 @@
 import sqlite3
 import time
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from app import logger
 
-def get_aggregate_stats(hours: int = None) -> Dict[str, Any]:
+def get_aggregate_stats(hours: Optional[int] = None) -> Dict[str, Any]:
     with logger.get_db_connection(logger._DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
@@ -37,6 +37,8 @@ def get_aggregate_stats(hours: int = None) -> Dict[str, Any]:
             totals["total_output_tokens"] = 0
             totals["total_tokens"] = 0
             totals["total_cached_tokens"] = 0
+            totals["total_compute_burn"] = 0
+            totals["avg_ttft_ms"] = 0.0
             totals["avg_duration_ms"] = 0.0
             totals["avg_tokens_per_second"] = 0.0
             

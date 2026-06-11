@@ -11,14 +11,16 @@ class ChatCompletionRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     model: str
     messages: List[ChatMessage]
-    temperature: Optional[float] = 1.0
-    top_p: Optional[float] = 1.0
-    n: Optional[int] = 1
+    # Sampling params default to None so omitted values are dropped by
+    # model_dump(exclude_none=True) instead of overriding backend defaults
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    n: Optional[int] = None
     stream: Optional[bool] = False
     stop: Optional[Union[List[str], str]] = None
     max_tokens: Optional[int] = None
-    presence_penalty: Optional[float] = 0.0
-    frequency_penalty: Optional[float] = 0.0
+    presence_penalty: Optional[float] = None
+    frequency_penalty: Optional[float] = None
     logit_bias: Optional[Dict[str, float]] = None
     user: Optional[str] = None
 
